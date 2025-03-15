@@ -2851,6 +2851,20 @@ $wgConf->settings += [
 		'default' => false,
 	],
 
+	// Lakeus
+	'wgLakeusShowRepositoryLink' => [
+		'default' => true,
+	],
+	'wgLakeusSiteNoticeHasBorder' => [
+		'default' => false,
+	],
+	'wgLakeusShouldAnimatePortlets' => [
+		'default' => false,
+	],
+	'wgLakeusShowStickyTOC' => [
+		'default' => false,
+	],
+
 	// Language
 	'wgLanguageCode' => [
 		'default' => 'en',
@@ -4160,8 +4174,8 @@ $wgConf->settings += [
 				353865,
 				/** Universal Omega (Technology team and Board) */
 				438966,
-				/** BlankEclair (Technology team) */
-				468499,
+				/** BlankEclair (Miraheze) (Technology team) */
+				592845,
 				/** Agent Isai (Technology team) */
 				512002,
 			],
@@ -4188,8 +4202,8 @@ $wgConf->settings += [
 				353865,
 				/** Universal Omega (Technology team and Board) */
 				438966,
-				/** BlankEclair (Technology team) */
-				468499,
+				/** BlankEclair (Miraheze) (Technology team) */
+				592845,
 				/** Agent Isai (Technology team) */
 				512002,
 			],
@@ -5189,14 +5203,17 @@ $wgConf->settings += [
 	],
 
 	// RatePage
+	'wgRPRatingAllowedNamespaces' => [
+		'default' => [ NS_MAIN ],
+	],
 	'wgRPRatingPageBlacklist' => [
 		'default' => [],
 	],
-	'wgRPAddSidebarSection' => [
-		'default' => true,
-	],
 	'wgRPSidebarPosition' => [
 		'default' => 2,
+	],
+	'wgRPAddSidebarSection' => [
+		'default' => true,
 	],
 	'wgRPShowResultsBeforeVoting' => [
 		'default' => false,
@@ -5303,6 +5320,7 @@ $wgConf->settings += [
 			'Original Authority',
 			'Reception123',
 			'Universal Omega',
+			'RhinosF1 (Miraheze)',
 		],
 	],
 
