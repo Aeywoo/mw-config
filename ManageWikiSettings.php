@@ -709,6 +709,28 @@ $wgManageWikiSettings = [
 	],
 
 	// Editing
+	'wgCampaignEventsProgramsAndEventsDashboardInstance' => [
+		'name' => 'CampaignEvents Programs and Events Dashboard Instance',
+		'from' => 'campaignevents',
+		'type' => 'list',
+		'options' => [
+			'Production' => 'production',
+			'Staging' => 'staging',
+		],
+		'overridedefault' => null,
+		'section' => 'editing',
+		'help' => 'Determines which instance of the P&E Dashboard should be used.',
+		'requires' => [],
+	],
+	'wgCampaignEventsEnableWikimediaParticipantQuestions' => [
+		'name' => 'CampaignEvents Enable Wikimedia Participant Questions',
+		'from' => 'campaignevents',
+		'type' => 'check',
+		'overridedefault' => true,
+		'section' => 'editing',
+		'help' => 'Whether to enable Wikimedia-specific questions that can be asked to participants, such as whether they belong to a Wikimedia affiliate.',
+		'requires' => [],
+	],
 	'wgEditSimilarMaxResultsPool' => [
 		'name' => 'EditSimilar Max Results Pool',
 		'from' => 'editsimilar',
@@ -1513,6 +1535,15 @@ $wgManageWikiSettings = [
 		'overridedefault' => false,
 		'section' => 'parserfunctions',
 		'help' => 'Make embedded images link to their file description page.',
+		'requires' => [],
+	],
+	'wgPortableInfoboxUseHeadings' => [
+		'name' => 'Portable Infobox Use Headings',
+		'from' => 'portableinfobox',
+		'type' => 'check',
+		'overridedefault' => true,
+		'section' => 'parserfunctions',
+		'help' => 'Whether or not to use heading tags for infobox titles and group headers (may cause incompatibilities with some extensions).',
 		'requires' => [],
 	],
 	'wgShortDescriptionEnableTagline' => [

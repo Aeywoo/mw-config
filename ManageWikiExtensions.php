@@ -1085,13 +1085,6 @@ $wgManageWikiExtensions = [
 		'requires' => [],
 		'section' => 'parserhooks',
 	],
-	'twittertag' => [
-		'name' => 'Twitter Tag',
-		'linkPage' => 'https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:TwitterTag',
-		'conflicts' => false,
-		'requires' => [],
-		'section' => 'parserhooks',
-	],
 	'urlgetparameters' => [
 		'name' => 'UrlGetParameters',
 		'linkPage' => 'https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:UrlGetParameters',
@@ -1297,6 +1290,65 @@ $wgManageWikiExtensions = [
 				'sysop' => [
 					'permissions' => [
 						'adminlinks',
+					],
+				],
+			],
+		],
+		'section' => 'specialpages',
+	],
+	'campaignevents' => [
+		'name' => 'CampaignEvents',
+		'linkPage' => 'https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:CampaignEvents',
+		'conflicts' => false,
+		'help' => 'Stewards: Do not enable this without T&S authority',
+		'requires' => [
+			'permissions' => [
+				'managewiki-restricted',
+			],
+		],
+		'install' => [
+			'sql' => [
+				'campaign_events' => "$IP/extensions/CampaignEvents/db_patches/mysql/tables-generated.sql",
+			],
+			'namespaces' => [
+				'Event' => [
+					'id' => 1728,
+					'searchable' => 0,
+					'subpages' => 1,
+					'protection' => '',
+					'content' => 0,
+					'aliases' => [],
+					'contentmodel' => 'wikitext',
+					'additional' => [],
+				],
+				'Event_talk' => [
+					'id' => 1729,
+					'searchable' => 0,
+					'subpages' => 1,
+					'protection' => '',
+					'content' => 0,
+					'aliases' => [],
+					'contentmodel' => 'wikitext',
+					'additional' => [],
+				],
+			],
+			'permissions' => [
+				'sysop' => [
+					'permissions' => [
+						'campaignevents-delete-registration',
+					],
+					'addgroups' => [
+						'event-organizer',
+					],
+					'removegroups' => [
+						'event-organizer',
+					],
+				],
+				'event-organizer' => [
+					'permissions' => [
+						'campaignevents-enable-registration',
+						'campaignevents-organize-events',
+						'campaignevents-email-participants',
 					],
 				],
 			],
@@ -1763,13 +1815,6 @@ $wgManageWikiExtensions = [
 				],
 			],
 		],
-		'section' => 'specialpages',
-	],
-	'refreshspecial' => [
-		'name' => 'RefreshSpecial',
-		'linkPage' => 'https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:RefreshSpecial',
-		'conflicts' => false,
-		'requires' => [],
 		'section' => 'specialpages',
 	],
 	'replacetext' => [

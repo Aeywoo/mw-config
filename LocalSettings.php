@@ -353,6 +353,14 @@ $wgConf->settings += [
 		],
 	],
 
+	// CampaignEvents
+	'wgCampaignEventsProgramsAndEventsDashboardInstance' => [
+		'default' => null,
+	],
+	'wgCampaignEventsEnableWikimediaParticipantQuestions' => [
+		'default' => true,
+	],
+
 	// Captcha
 	'wgCaptchaTriggers' => [
 		'default' => [
@@ -3889,6 +3897,7 @@ $wgConf->settings += [
 				'viewpmlog',
 				'viewsuppressed',
 				'writeapi',
+				'campaignevents-organize-events',
 			],
 			'user' => [
 				'autoconfirmed',
@@ -4972,6 +4981,9 @@ $wgConf->settings += [
 	],
 	'wgPortableInfoboxUseFileDescriptionPage' => [
 		'default' => false,
+	],
+	'wgPortableInfoboxUseHeadings' => [
+		'default' => true,
 	],
 	'wgPortableInfoboxCacheRenderers' => [
 		'default' => true,
