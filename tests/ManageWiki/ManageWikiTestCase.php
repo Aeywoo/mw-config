@@ -8,7 +8,7 @@ use stdClass;
 
 abstract class ManageWikiTestCase extends TestCase {
 
-	public const REGEX_READABLE = '^[A-Za-z0-9 _,;:!?“”(){}*/&#<=>|\.\'\"\[\]\$-]+$';
+	public const REGEX_READABLE = '^(?!.*<a href=)(?!.*<br\s*>)[A-Za-z0-9 _,;:!?“”(){}*/&#<=>|\.\'\"\[\]\$-]+$';
 	public const REGEX_CONFIG = '^(wg|eg|wmg|wgex|smwg)[A-Z_][a-zA-Z0-9_]*$';
 
 	abstract public function getSchema(): array;
@@ -49,7 +49,7 @@ abstract class ManageWikiTestCase extends TestCase {
 		);
 	}
 
-	abstract public function configProvider(): array;
+	abstract public static function configProvider(): array;
 
 	/** @dataProvider configProvider */
 	public function testGetScheme( $config, $expected ) {

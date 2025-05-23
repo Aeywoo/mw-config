@@ -16,16 +16,16 @@
  *
  * 'requires' can be one of:
  *
- * activeusers: max integer amount of active users a wiki may have in order to enable this extension.
  * articles: max integer amount of articles a wiki may have in order to enable this extension.
  * extensions: array of other extensions that must be enabled in order to enable this extension.
+ * files: max integer amount of files a wiki may have in order to enable this extension.
  * pages: max integer amount of pages a wiki may have in order to enable this extension.
  * permissions: array of permissions a user must have to be able to enable this extension. Regardless of this value, a user must always have the managewiki permission.
+ * users: max integer amount of users a wiki may have in order to enable this extension.
  * visibility['state']: can be either 'private' or 'public'. If set to 'private' this extension can only be enabled on private wikis. If set to 'public' it can only be enabled on public wikis.
  *
  * 'install'/'remove' can be one of:
  *
- * files: array, mapped to location => source.
  * mwscript: array, mapped to script path => array of options.
  * namespaces: array of which namespaces and namespace data to install with extension; 'remove' only needs namespace ID.
  * permissions: array of which permissions to install with extension.
@@ -35,7 +35,6 @@
 
 use Miraheze\MirahezeMagic\Maintenance\CreateCargoDB;
 use Miraheze\MirahezeMagic\Maintenance\PopulateWikibaseSitesTable;
-use Miraheze\MirahezeMagic\Maintenance\ResetWikiCaches;
 
 $wgManageWikiExtensions = [
 	// API
@@ -408,14 +407,6 @@ $wgManageWikiExtensions = [
 		'conflicts' => false,
 		'requires' => [],
 		'section' => 'parserhooks',
-	],
-	'customsearchprofiles' => [
-		'name' => 'CustomSearchProfiles',
-		'linkPage' => 'https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:CustomSearchProfiles',
-		'help' => 'Note: This extension is currently not configurable in ManageWiki. Please create a task on Phorge or a pull request to configure it.',
-		'conflicts' => false,
-		'requires' => [],
-		'section' => 'other',
 	],
 	'customsubtitle' => [
 		'name' => 'CustomSubtitle',
@@ -1437,14 +1428,6 @@ $wgManageWikiExtensions = [
 		'requires' => [],
 		'section' => 'specialpages',
 	],
-	'featuredfeeds' => [
-		'name' => 'FeaturedFeeds',
-		'linkPage' => 'https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:FeaturedFeeds',
-		'help' => '<b>Configuration of </b><code>$wgFeaturedFeeds</code><b> is not possible in ManageWiki.</b><br/> File a task on <a href="https://meta.miraheze.org/wiki/Special:MyLanguage/Phorge">Phorge</a> or a pull request on our mw-config repository with the desired configuration',
-		'conflicts' => false,
-		'requires' => [],
-		'section' => 'other'
-	],
 	'flaggedrevs' => [
 		'name' => 'FlaggedRevs',
 		'linkPage' => 'https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:FlaggedRevs',
@@ -1452,7 +1435,7 @@ $wgManageWikiExtensions = [
 		'requires' => [],
 		'install' => [
 			'sql' => [
-				'flaggedpages' => "$IP/extensions/FlaggedRevs/backend/schema/mysql/tables-generated.sql",
+				'flaggedpages' => "$IP/extensions/FlaggedRevs/includes/backend/schema/mysql/tables-generated.sql",
 			],
 			'permissions' => [
 				'editor' => [
@@ -1820,7 +1803,7 @@ $wgManageWikiExtensions = [
 	'replacetext' => [
 		'name' => 'Replace Text',
 		'linkPage' => 'https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:Replace_Text',
-		'help' => 'Stewards and Wiki Mechanics: This extension should NOT be enabled on wikis created before 12 May 2024 without consulting the <a href="https://meta.miraheze.org/wiki/Special:MyLanguage/Tech:Volunteers" target="_blank">Technology Team</a> first',
+		'help' => 'Stewards and Wiki Mechanics: This extension should NOT be enabled on wikis created before 12 May 2024 without consulting the [[m:Special:MyLanguage/Tech:Volunteers|Technology Team]] first.',
 		'conflicts' => false,
 		'requires' => [
 			'permissions' => [
@@ -1915,6 +1898,7 @@ $wgManageWikiExtensions = [
 				'*' => [
 					'permissions' => [
 						'translate',
+						'unfuzzy'
 					],
 				],
 				'sysop' => [
@@ -2229,7 +2213,6 @@ $wgManageWikiExtensions = [
 		],
 		'install' => [
 			'mwscript' => [
-				ResetWikiCaches::class => [],
 				"$IP/extensions/CirrusSearch/maintenance/UpdateSearchIndexConfig.php" => [],
 				"$IP/extensions/CirrusSearch/maintenance/ForceSearchIndex.php" => [
 					'skipLinks' => true,
@@ -2266,6 +2249,14 @@ $wgManageWikiExtensions = [
 	'commonsmetadata' => [
 		'name' => 'CommonsMetadata',
 		'linkPage' => 'https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:CommonsMetadata',
+		'conflicts' => false,
+		'requires' => [],
+		'section' => 'other',
+	],
+	'customsearchprofiles' => [
+		'name' => 'CustomSearchProfiles',
+		'linkPage' => 'https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:CustomSearchProfiles',
+		'help' => 'Note: This extension is currently not configurable in ManageWiki. Please create a task on Phorge or a pull request to configure it.',
 		'conflicts' => false,
 		'requires' => [],
 		'section' => 'other',
@@ -2362,6 +2353,14 @@ $wgManageWikiExtensions = [
 			],
 		],
 		'section' => 'other',
+	],
+	'featuredfeeds' => [
+		'name' => 'FeaturedFeeds',
+		'linkPage' => 'https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:FeaturedFeeds',
+		'help' => '<b>Configuration of</b> <code>$wgFeaturedFeeds</code> <b>is not possible in ManageWiki.</b><br />File a task on [[m:Special:MyLanguage/Phorge|Phorge]] or a pull request on our mw-config repository with the desired configuration.',
+		'conflicts' => false,
+		'requires' => [],
+		'section' => 'other'
 	],
 	'flexdiagrams' => [
 		'name' => 'Flex Diagrams',
@@ -3170,7 +3169,7 @@ $wgManageWikiExtensions = [
 	'semanticmediawiki' => [
 		'name' => 'SemanticMediaWiki',
 		'linkPage' => 'https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:SemanticMediaWiki',
-		'help' => '<br/> Permanently "experimental" and may be removed with little to no prior notice. WARNING: Disabling this extension after it\'s already been enabled will clear all SemanticMediaWiki database tables as well.',
+		'help' => '<br />Permanently "experimental" and may be removed with little to no prior notice. WARNING: Disabling this extension after it\'s already been enabled will clear all SemanticMediaWiki database tables as well.',
 		'conflicts' => false,
 		'requires' => [
 			'permissions' => [
@@ -3551,7 +3550,7 @@ $wgManageWikiExtensions = [
 					'protection' => '',
 					'content' => 0,
 					'aliases' => [],
-					'contentmodel' => 'wikitext',
+					'contentmodel' => 'wikibase-item',
 					'additional' => []
 				],
 				'Item_talk' => [
@@ -3571,7 +3570,7 @@ $wgManageWikiExtensions = [
 					'protection' => '',
 					'content' => 0,
 					'aliases' => [],
-					'contentmodel' => 'wikitext',
+					'contentmodel' => 'wikibase-property',
 					'additional' => []
 				],
 				'Property_talk' => [

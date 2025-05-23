@@ -50,6 +50,12 @@ if ( $wi->dbname !== 'ldapwikiwiki' && $wi->dbname !== 'srewiki' ) {
 
 	$wgCentralAuthAutoLoginWikis = $wmgCentralAuthAutoLoginWikis;
 
+	if ( version_compare( MW_VERSION, '1.44', '>=' ) ) {
+		$wgCentralAuthEnableSul3 = false;
+	} else {
+		$wgCentralAuthEnableSul3 = [];
+	}
+
 	if ( isset( $wgAuthManagerAutoConfig['primaryauth'][LocalPasswordPrimaryAuthenticationProvider::class] ) ) {
 		$wgAuthManagerAutoConfig['primaryauth'][LocalPasswordPrimaryAuthenticationProvider::class]['args'][0]['loginOnly'] = true;
 	}
@@ -447,7 +453,7 @@ if ( !$wi->isExtensionActive( 'wikiseo' ) ) {
 
 // $wgFooterIcons
 if ( (bool)$wmgWikiapiaryFooterPageName ) {
-	$wgFooterIcons['poweredby']['wikiapiary'] = [
+	$wgFooterIcons['wikiapairy']['wikiapiary'] = [
 		'src' => 'https://static.wikitide.net/commonswiki/b/b4/Monitored_by_WikiApiary.png',
 		'url' => 'https://wikiapiary.com/wiki/' . str_replace( ' ', '_', $wmgWikiapiaryFooterPageName ),
 		'alt' => 'Monitored by WikiApiary'
@@ -570,6 +576,13 @@ if ( !preg_match( '/(miraheze|mirabeta|nexttide|wikitide)\.org$/', $wi->server )
 		$wgUrlShortenerAllowedDomains,
 		[ preg_quote( str_replace( 'https://', '', $wi->server ) ) ]
 	);
+}
+
+// DataMaps
+if ( $wi->isExtensionActive( 'Interactive Data Maps' ) ) {
+	if ( $wgDataMapsEnableFandomPortingTools ) {
+		$wgDataMapsNamespaceId = 2900;
+	}
 }
 
 // JsonConfig
