@@ -1,9 +1,11 @@
 <?php
 
 use MediaWiki\Actions\ActionEntryPoint;
+use MediaWiki\EditPage\EditPage;
 use MediaWiki\Html\Html;
 use MediaWiki\MediaWikiServices;
 use MediaWiki\Output\OutputPage;
+use MediaWiki\Parser\Parser;
 use MediaWiki\Request\WebRequest;
 use MediaWiki\SpecialPage\DisabledSpecialPage;
 use MediaWiki\Title\Title;
@@ -57,17 +59,6 @@ switch ( $wi->dbname ) {
 		];
 
 		break;
-	case 'arquivopkmnwiki':
-		$wgJsonConfigs['Map.JsonConfig']['isLocal'] = true;
-		$wgJsonConfigs['Tabular.JsonConfig']['isLocal'] = true;
-
-		$wgJsonConfigs['Map.JsonConfig']['license'] = 'CC0-1.0';
-		$wgJsonConfigs['Tabular.JsonConfig']['license'] = 'CC0-1.0';
-
-		$wgJsonConfigs['Map.JsonConfig']['store'] = true;
-		$wgJsonConfigs['Tabular.JsonConfig']['store'] = true;
-
-		break;
 	case 'battlebornwiki':
 	case 'gogiganticwiki':
 	case 'pizzatowerwiki':
@@ -98,20 +89,13 @@ switch ( $wi->dbname ) {
 		break;
 	case 'constantnoblewiki':
 		$wgDplSettings['maxResultCount'] = 2500;
+		$wgDplSettings['maxCategoryCount'] = 100;
 
-		break;
-	case 'datawikiwiki':
-		$wgHooks['SkinAddFooterLinks'][] = 'onSkinAddFooterLinks';
-
-		function onSkinAddFooterLinks( Skin $skin, string $key, array &$footerItems ) {
-			if ( $key === 'places' ) {
-				$linkRenderer = MediaWikiServices::getInstance()->getLinkRenderer();
-				$footerItems['github'] = $linkRenderer->makeExternalLink(
-					'https://github.com/Datawiki-online',
-					'GitHub', $skin->getTitle()
-				);
-			}
-		}
+		// T13620: Show AbuseFilter changes in RecentChanges
+		$wgExtensionFunctions[] = static function () {
+			global $wgLogRestrictions;
+			unset( $wgLogRestrictions['abusefilter'] );
+		};
 
 		break;
 	case 'dlfmwiki':
@@ -146,6 +130,11 @@ switch ( $wi->dbname ) {
 		$wgDplSettings['maxCategoryCount'] = 7;
 
 		break;
+	case 'dungeonrngwiki':
+		$wgVectorNightMode['logged_in'] = true;
+		$wgVectorNightMode['logged_out'] = true;
+
+		break;
 	case 'famedatawiki':
 		$wgHooks['BeforePageDisplay'][] = 'onBeforePageDisplay';
 
@@ -156,6 +145,20 @@ switch ( $wi->dbname ) {
 		break;
 	case 'fischwiki':
 		$wgLogRestrictions['newusers'] = 'read';
+
+		break;
+	case 'ftlmultiversewiki':
+		// Intentionally empty out $wgJsonConfigs because of this error:
+		// JsonConfig: Invalid $wgJsonConfigs['Map.JsonConfig']: Namespace 486 is already set to handle model 'json' [Called from JsonConfig\JCSingleton::parseConfiguration in /srv/mediawiki/1.43/extensions/JsonConfig/includes/JCSingleton.php at line 147] in /srv/mediawiki/1.43/includes/debug/MWDebug.php on line 498.
+		// and because it seems like a bureaucrat doesn't really care for them:
+		// https://issue-tracker.miraheze.org/T13275#266704
+		$wgJsonConfigs = [
+			'Data.JsonConfig' => [
+				'namespace' => 486,
+				'nsName' => 'Data',
+			],
+		];
+		// $wgJsonConfigModels['Data.JsonConfig'] is set in LocalSettings.php <3
 
 		break;
 	case 'furrnationswiki':
@@ -270,6 +273,13 @@ switch ( $wi->dbname ) {
 	case 'houkai2ndwiki':
 		$wgSpecialPages['Analytics'] = DisabledSpecialPage::getCallback( 'Analytics', 'MatomoAnalytics-disabled' );
 		$wgPageImagesScores['position'] = [ 100, -100, -100, -100 ];
+
+		break;
+	case 'kaiserreichwiki':
+		$wgVectorNightMode['beta'] = true;
+		$wgVectorNightMode['logged_out'] = true;
+		$wgVectorNightMode['logged_in'] = true;
+
 		break;
 	case 'kagagawiki':
 		$uwCcAvailableLanguages = [
@@ -371,6 +381,35 @@ switch ( $wi->dbname ) {
 		];
 
 		break;
+	case 'cgwiki':
+		// T13424: Redirect User:Example?action=edit&redlink=1 -> User:Example
+		// to display the UserProfileV2 stuff when following redlinks (if the
+		// user wants to intentionally edit their user page, then a request
+		// URI of User:Example?action=edit will be sent)
+		$wgHooks['AlternateEdit'][] = 'onAlternateEdit';
+
+		function onAlternateEdit( EditPage $editPage ) {
+			$title = $editPage->getTitle();
+			// Bail if we're not in a user page
+			if ( !$title->inNamespace( NS_USER ) ) {
+				return true;
+			}
+
+			$context = $editPage->getContext();
+			if (
+				// If redlink=1 is set
+				$context->getRequest()->getBool( 'redlink' )
+				// and if we're not on a subpage
+				&& $title->equals( $title->getRootTitle() )
+			) {
+				$context->getOutput()->redirect( $title->getFullURL() );
+				return false;
+			}
+
+			return true;
+		}
+
+		// Intentional fallthrough as stuff here is meant to apply for cgwiki + lhmnwiki
 	case 'lhmnwiki':
 		// UploadWizard
 		$wgUploadWizardConfig = [
@@ -598,30 +637,22 @@ switch ( $wi->dbname ) {
 
 		function onSkinAddFooterLinks( Skin $skin, string $key, array &$footerItems ) {
 			if ( $key === 'places' ) {
-				$footerlinks['lienhe'] = Html::element( 'a',
+				$footerlinks['lienhe'] = Html::rawElement( 'a',
 					[
 						'href' => 'https://lophocmatngu.wiki/Đặc_biệt:Liên_hệ',
-						'rel' => 'noreferrer noopener',
+						'rel' => 'nofollow noreferrer noopener',
 					],
 					$skin->msg( 'contactpage-label' )->text()
 				);
 
-				$footerlinks['banquyen'] = Html::element( 'a',
+				$footerlinks['banquyen'] = Html::rawElement( 'a',
 					[
 						'href' => 'https://lophocmatngu.wiki/Đặc_biệt:Liên_hệ/banquyen',
-						'rel' => 'noreferrer noopener',
+						'rel' => 'nofollow noreferrer noopener',
 					],
 					$skin->msg( 'crpage-label' )->text()
 				);
 			}
-		}
-
-		break;
-	case 'libertygamewiki':
-		$wgHooks['BeforePageDisplay'][] = 'onBeforePageDisplay';
-
-		function onBeforePageDisplay( OutputPage $out ) {
-			$out->addMeta( 'viewport', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0' );
 		}
 
 		break;
@@ -773,13 +804,12 @@ switch ( $wi->dbname ) {
 		$wgDplSettings['allowUnlimitedResults'] = true;
 
 		break;
-	case 'newusopediawiki':
-		$wgFilterLogTypes['comments'] = false;
+	case 'namuwitchwiki':
+		$wgDisableLangConversion = true;
 
 		break;
-	case 'nycsubwaywiki':
-		unset( $wgGroupPermissions['interwiki-admin'] );
-		unset( $wgGroupPermissions['no-ipinfo'] );
+	case 'newusopediawiki':
+		$wgFilterLogTypes['comments'] = false;
 
 		break;
 	case 'openfrontwiki':
@@ -799,15 +829,6 @@ switch ( $wi->dbname ) {
 		$wgLogos = [
 			'svg' => "https://static.wikitide.net/picrosswiki/0/0a/Pikuw.svg",
 		];
-		break;
-	case 'pokemundowiki':
-		$wgHooks['BeforePageDisplay'][] = 'onBeforePageDisplay';
-
-		function onBeforePageDisplay( OutputPage $out ) {
-			$out->addLink( [ 'rel' => 'preconnect', 'href' => 'https://fonts.gstatic.com' ] );
-			$out->addLink( [ 'rel' => 'stylesheet', 'href' => 'https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap' ] );
-		}
-
 		break;
 	case 'paneidoversewiki':
 		$wgHooks['AdminLinks'][] = 'onAdminLinks';
@@ -884,20 +905,27 @@ switch ( $wi->dbname ) {
 		}
 
 		break;
-	case 'srewiki':
-		wfLoadExtension( 'LdapAuthentication' );
+	case 'stopxwiki':
+		$wgHooks['SkinAddFooterLinks'][] = 'onSkinAddFooterLinks';
 
-		$wgAuthManagerAutoConfig['primaryauth'] += [
-			LdapPrimaryAuthenticationProvider::class => [
-				'class' => LdapPrimaryAuthenticationProvider::class,
-				'args' => [ [
-					// don't allow local non-LDAP accounts
-					'authoritative' => true,
-				] ],
-				// must be smaller than local pw provider
-				'sort' => 50,
-			],
-		];
+		function onSkinAddFooterLinks( Skin $skin, string $key, array &$footerItems ) {
+			if ( $key === 'places' ) {
+				$footerlinks['contact'] = Html::rawElement( 'a',
+					[
+						'href' => 'mailto:tekannabrand@gmail.com',
+						'rel' => 'nofollow noreferrer noopener',
+					],
+					$skin->msg( 'contactpage' )->text()
+				);
+				$footerlinks['stopxpolicy'] = Html::rawElement( 'a',
+					[
+						'href' => 'https://tekannabrand.org/wiki/TermsOfService',
+						'rel' => 'nofollow noreferrer noopener',
+					],
+					$skin->msg( 'stopxpolicypage' )->text()
+				);
+			}
+		}
 
 		break;
 	case 'testwikibeta':
@@ -921,6 +949,163 @@ switch ( $wi->dbname ) {
 			'General' => 800000,
 			'General of the Army' => 1000000,
 		];
+		break;
+	case 'tkuwiki':
+		$wgHooks['BeforePageDisplay'][] = 'onBeforePageDisplay';
+
+		function onBeforePageDisplay( &$out, &$skin ) {
+			$title = $out->getTitle();
+
+			if ( !$title instanceof Title ) {
+				return;
+			}
+
+			$service = MediaWikiServices::getInstance();
+			$languageNameUtils = $service->getLanguageNameUtils();
+			$nsText = $title->getNsText();
+			$mainText = $title->getText();
+
+			if (
+				$languageNameUtils->isSupportedLanguage( strtolower( $nsText ) ) &&
+				$out->getPageTitle() === Parser::formatPageTitle( $nsText, ':', $mainText )
+			) {
+				$out->setPageTitle( Parser::formatPageTitle( '', ':', $title->getText() ) );
+
+				if ( $title->isMainPage() ) {
+					$msg = $out->msg( 'pagetitle-view-mainpage' );
+
+					if ( !$msg->isDisabled() ) {
+						$out->setHTMLTitle( $msg );
+					}
+				}
+			}
+		}
+
+		$wgHooks['PageContentLanguage'][] = 'onPageContentLanguage';
+
+		function onPageContentLanguage( $title, &$pageLang, $userLang ) {
+			$service = MediaWikiServices::getInstance();
+			$languageNameUtils = $service->getLanguageNameUtils();
+
+			if (
+				$title->inNamespaces(
+					NS_SPECIAL,
+					NS_MAIN,
+					NS_TALK,
+					NS_USER,
+					NS_USER_TALK,
+					NS_PROJECT,
+					NS_PROJECT_TALK,
+					NS_FILE,
+					NS_FILE_TALK,
+					NS_MEDIAWIKI_TALK,
+					NS_TEMPLATE,
+					NS_TEMPLATE_TALK,
+					NS_HELP,
+					NS_HELP_TALK,
+					NS_CATEGORY,
+					NS_CATEGORY_TALK
+				) ||
+				(
+					$title->isTalkPage() &&
+					$languageNameUtils->isSupportedLanguage(
+						strtolower( $title->getSubjectPage()->getNsText() )
+					)
+				)
+			) {
+				$pageLang = $service->getLanguageFactory()->getLanguage( 'zh-hant' );
+
+				return;
+			}
+
+			$nsTextLc = strtolower( $title->getNsText() );
+
+			if ( $languageNameUtils->isSupportedLanguage( $nsTextLc ) ) {
+				$pageLang = $service->getLanguageFactory()->getLanguage( $nsTextLc );
+			}
+		}
+
+		$wgHooks['SkinTemplateNavigation::Universal'][] = 'SkinTemplateNavigation__Universal';
+
+		function SkinTemplateNavigation__Universal( $skinTemplate, &$links ) {
+			$title = $skinTemplate->getRelevantTitle();
+
+			if ( $title->canExist() ) {
+				$subjectPage = $title->getSubjectPage();
+
+				if ( $subjectPage->isMainPage() ) {
+					return;
+				}
+
+				$service = MediaWikiServices::getInstance();
+				$languageNameUtils = $service->getLanguageNameUtils();
+				$nsText = $subjectPage->getNsText();
+				$subjectId = $title->getNamespaceKey( '' );
+				$userCanRead = $skinTemplate->getAuthority()->probablyCan( 'read', $title );
+				$isTalk = $title->isTalkPage();
+
+				if ( $languageNameUtils->isSupportedLanguage( strtolower( $nsText ) ) ) {
+					$subjectMsg = [ 'nstab-main' ];
+
+					$links['namespaces'][$subjectId] = $skinTemplate->tabAction(
+						$subjectPage, $subjectMsg, !$isTalk, '', $userCanRead
+					);
+					$links['associated-pages'][$subjectId] = $skinTemplate->tabAction(
+						$subjectPage, $subjectMsg, !$isTalk, '', $userCanRead
+					);
+				}
+			}
+		}
+
+		$wgHooks['UserGetLanguageObject'][] = 'onUserGetLanguageObject';
+
+		function onUserGetLanguageObject( $user, &$code, $context ) {
+			$service = MediaWikiServices::getInstance();
+			$languageNameUtils = $service->getLanguageNameUtils();
+			$title = $context->getTitle();
+
+			if ( $user->isRegistered() || !$title ) {
+				return;
+			}
+
+			if (
+				$title->inNamespaces(
+					NS_SPECIAL,
+					NS_MAIN,
+					NS_TALK,
+					NS_USER,
+					NS_USER_TALK,
+					NS_PROJECT,
+					NS_PROJECT_TALK,
+					NS_FILE,
+					NS_FILE_TALK,
+					NS_MEDIAWIKI_TALK,
+					NS_TEMPLATE,
+					NS_TEMPLATE_TALK,
+					NS_HELP,
+					NS_HELP_TALK,
+					NS_CATEGORY,
+					NS_CATEGORY_TALK
+				) ||
+				(
+					$title->isTalkPage() &&
+					$languageNameUtils->isSupportedLanguage(
+						strtolower( $title->getSubjectPage()->getNsText() )
+					)
+				)
+			) {
+				$code = 'zh-hant';
+
+				return;
+			}
+
+			$nsTextLc = strtolower( $title->getNsText() );
+
+			if ( $languageNameUtils->isSupportedLanguage( $nsTextLc ) ) {
+				$code = $nsTextLc;
+			}
+		}
+
 		break;
 	case 'tuscriaturaswiki':
 		$wgHooks['AfterFinalPageOutput'][] = 'onAfterFinalPageOutput';
@@ -967,7 +1152,6 @@ switch ( $wi->dbname ) {
 
 		break;
 	case 'traceprojectwikiwiki':
-	case 'vgportdbwiki':
 		$wgDplSettings['allowUnlimitedCategories'] = true;
 		$wgDplSettings['allowUnlimitedResults'] = true;
 
@@ -975,18 +1159,6 @@ switch ( $wi->dbname ) {
 	case 'whentheycrywiki':
 		$wgGalleryOptions['imageWidth'] = 200;
 		$wgGalleryOptions['imageHeight'] = 200;
-
-		break;
-	case 'wonderingstarswiki':
-		$wgPivotFeatures = [
-			'showActionsForAnon' => false,
-			'fixedNavBar' => true,
-			'usePivotTabs' => true,
-			'showRecentChangesUnderTools' => false,
-		];
-		break;
-	case 'worldboxwiki':
-		$wgSpecialPages['Analytics'] = DisabledSpecialPage::getCallback( 'Analytics', 'MatomoAnalytics-disabled' );
 
 		break;
 	case 'genshinimpactwiki':

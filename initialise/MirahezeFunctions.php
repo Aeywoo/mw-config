@@ -5,9 +5,7 @@ use MediaWiki\Context\IContextSource;
 use MediaWiki\MediaWikiServices;
 use MediaWiki\Registration\ExtensionProcessor;
 use MediaWiki\Registration\ExtensionRegistry;
-use Miraheze\CreateWiki\Services\RemoteWikiFactory;
-use Miraheze\ManageWiki\Helpers\ManageWikiSettings;
-use Wikimedia\Rdbms\IDatabase;
+use Miraheze\ManageWiki\Helpers\Factories\ModuleFactory;
 use Wikimedia\Rdbms\IReadableDatabase;
 
 class MirahezeFunctions {
@@ -710,7 +708,13 @@ class MirahezeFunctions {
 		// Handle namespaces
 		if ( isset( $cacheArray['namespaces'] ) ) {
 			foreach ( $cacheArray['namespaces'] as $name => $ns ) {
-				$settings['wgExtraNamespaces']['default'][(int)$ns['id']] = $name;
+				if ( (int)$ns['id'] === NS_PROJECT ) {
+					$settings['wgMetaNamespace']['default'] = $name;
+				} elseif ( (int)$ns['id'] === NS_PROJECT_TALK ) {
+					$settings['wgMetaNamespaceTalk']['default'] = $name;
+				} else {
+					$settings['wgExtraNamespaces']['default'][(int)$ns['id']] = $name;
+				}
 				$settings['wgNamespacesToBeSearchedDefault']['default'][(int)$ns['id']] = $ns['searchable'];
 				$settings['wgNamespacesWithSubpages']['default'][(int)$ns['id']] = $ns['subpages'];
 				$settings['wgNamespaceContentModels']['default'][(int)$ns['id']] = $ns['contentmodel'];
@@ -965,7 +969,7 @@ class MirahezeFunctions {
 	 * @param string $globalDatabase
 	 * @return array
 	 */
-	private static function generateDatabaseLists( string $globalDatabase ) {
+	private static function generateDatabaseLists( string $globalDatabase ): array {
 		$dbr = self::getDatabaseConnection( $globalDatabase );
 		$allWikis = $dbr->newSelectQueryBuilder()
 			->table( 'cw_wikis' )
@@ -973,13 +977,12 @@ class MirahezeFunctions {
 				 'wiki_dbcluster',
 				 'wiki_dbname',
 				 'wiki_url',
-				 'wiki_primary_domain',
 				 'wiki_sitename',
-				 'wiki_version',
 				 'wiki_deleted',
 				 'wiki_closed',
 				 'wiki_inactive',
 				 'wiki_private',
+				 'wiki_extra',
 			] )
 			->caller( __METHOD__ )
 			->fetchResultSet();
@@ -1009,8 +1012,10 @@ class MirahezeFunctions {
 					];
 				}
 
-				$primaryDomain = ( $wiki->wiki_primary_domain ?? null ) ?: self::DEFAULT_SERVER[self::getRealm( $wiki->wiki_dbname )];
-				$wikiVersion = ( $wiki->wiki_version ?? null ) ?: self::MEDIAWIKI_VERSIONS[self::getDefaultMediaWikiVersion()];
+				$extraData = json_decode( $wiki->wiki_extra ?: '[]', true );
+
+				$primaryDomain = ( $extraData['primary-domain'] ?? null ) ?: self::DEFAULT_SERVER[self::getRealm( $wiki->wiki_dbname )];
+				$wikiVersion = ( $extraData['mediawiki-version'] ?? null ) ?: self::MEDIAWIKI_VERSIONS[self::getDefaultMediaWikiVersion()];
 
 				$combiList[$wiki->wiki_dbname] = [
 					's' => $wiki->wiki_sitename,
@@ -1053,8 +1058,9 @@ class MirahezeFunctions {
 
 	/**
 	 * @param array &$databaseLists
+	 * @return void
 	 */
-	public static function onGenerateDatabaseLists( array &$databaseLists ) {
+	public static function onGenerateDatabaseLists( array &$databaseLists ): void {
 		$isBeta = php_uname( 'n' ) === self::BETA_HOSTNAME;
 
 		$databases = self::generateDatabaseLists(
@@ -1080,12 +1086,13 @@ class MirahezeFunctions {
 	 * @param string $wiki
 	 * @param IReadableDatabase $dbr
 	 * @param array &$cacheArray
+	 * @return void
 	 */
 	public static function onCreateWikiDataFactoryBuilder(
 		string $wiki,
 		IReadableDatabase $dbr,
 		array &$cacheArray
-	) {
+	): void {
 		$row = $dbr->newSelectQueryBuilder()
 			->table( 'cw_wikis' )
 			->fields( [
@@ -1101,15 +1108,21 @@ class MirahezeFunctions {
 	}
 
 	/**
-	 * @param bool $ceMW
 	 * @param IContextSource $context
-	 * @param string $dbName
+	 * @param ModuleFactory $moduleFactory
+	 * @param string $dbname
+	 * @param bool $ceMW
 	 * @param array &$formDescriptor
+	 * @return void
 	 */
-	public static function onManageWikiCoreAddFormFields( $ceMW, $context, $dbName, &$formDescriptor ) {
-		$permissionManager = MediaWikiServices::getInstance()->getPermissionManager();
-
-		$mwVersion = self::getMediaWikiVersion( $dbName );
+	public static function onManageWikiCoreAddFormFields(
+		IContextSource $context,
+		ModuleFactory $moduleFactory,
+		string $dbname,
+		bool $ceMW,
+		array &$formDescriptor
+	): void {
+		$mwVersion = self::getMediaWikiVersion( $dbname );
 		$versions = array_unique( array_filter( self::MEDIAWIKI_VERSIONS, static function ( $version ) use ( $mwVersion ): bool {
 			return $mwVersion === $version || is_dir( self::MEDIAWIKI_DIRECTORY . $version );
 		} ) );
@@ -1119,15 +1132,15 @@ class MirahezeFunctions {
 		$formDescriptor['primary-domain'] = [
 			'label-message' => 'miraheze-label-managewiki-primary-domain',
 			'type' => 'select',
-			'options' => array_combine( self::ALLOWED_DOMAINS[self::getRealm( $dbName )], self::ALLOWED_DOMAINS[self::getRealm( $dbName )] ),
-			'default' => self::getPrimaryDomain( $dbName ),
-			'disabled' => !$permissionManager->userHasRight( $context->getUser(), 'managewiki-restricted' ),
+			'options' => array_combine( self::ALLOWED_DOMAINS[self::getRealm( $dbname )], self::ALLOWED_DOMAINS[self::getRealm( $dbname )] ),
+			'default' => self::getPrimaryDomain( $dbname ),
+			'disabled' => !$context->getAuthority()->isAllowed( 'managewiki-restricted' ),
 			'cssclass' => 'managewiki-infuse',
 			'section' => 'main',
 		];
 
-		$mwSettings = new ManageWikiSettings( $dbName );
-		$setList = $mwSettings->list();
+		$mwSettings = $moduleFactory->settings( $dbname );
+		$setList = $mwSettings->listAll();
 		$formDescriptor['article-path'] = [
 			'label-message' => 'miraheze-label-managewiki-article-path',
 			'type' => 'select',
@@ -1136,7 +1149,7 @@ class MirahezeFunctions {
 				'miraheze-label-managewiki-article-path-root' => '/$1',
 			],
 			'default' => $setList['wgArticlePath'] ?? '/wiki/$1',
-			'disabled' => !$permissionManager->userHasRight( $context->getUser(), 'managewiki-restricted' ),
+			'disabled' => !$context->getAuthority()->isAllowed( 'managewiki-restricted' ),
 			'cssclass' => 'managewiki-infuse',
 			'section' => 'main',
 		];
@@ -1145,7 +1158,7 @@ class MirahezeFunctions {
 			'label-message' => 'miraheze-label-managewiki-mainpage-is-domain-root',
 			'type' => 'check',
 			'default' => $setList['wgMainPageIsDomainRoot'] ?? false,
-			'disabled' => !$permissionManager->userHasRight( $context->getUser(), 'managewiki-restricted' ),
+			'disabled' => !$context->getAuthority()->isAllowed( 'managewiki-restricted' ),
 			'cssclass' => 'managewiki-infuse',
 			'section' => 'main',
 		];
@@ -1155,7 +1168,7 @@ class MirahezeFunctions {
 			'type' => 'select',
 			'options' => array_combine( $versions, $versions ),
 			'default' => $mwVersion,
-			'disabled' => !$permissionManager->userHasRight( $context->getUser(), 'managewiki-restricted' ),
+			'disabled' => !$context->getAuthority()->isAllowed( 'managewiki-restricted' ),
 			'cssclass' => 'managewiki-infuse',
 			'section' => 'main',
 		];
@@ -1163,38 +1176,45 @@ class MirahezeFunctions {
 
 	/**
 	 * @param IContextSource $context
-	 * @param string $dbName
-	 * @param IDatabase $dbw
+	 * @param ModuleFactory $moduleFactory
+	 * @param string $dbname
 	 * @param array $formData
-	 * @param RemoteWikiFactory &$remoteWiki
+	 * @return void
 	 */
-	public static function onManageWikiCoreFormSubmission( $context, $dbName, $dbw, $formData, &$remoteWiki ) {
-		$version = self::getMediaWikiVersion( $dbName );
-		if ( $formData['mediawiki-version'] !== $version && is_dir( self::MEDIAWIKI_DIRECTORY . $formData['mediawiki-version'] ) ) {
-			$remoteWiki->addNewRow( 'wiki_version', $formData['mediawiki-version'] );
-			$remoteWiki->trackChange( 'mediawiki-version', $version, $formData['mediawiki-version'] );
-		}
-
-		if ( $formData['primary-domain'] !== self::getPrimaryDomain( $dbName ) ) {
-			$remoteWiki->addNewRow( 'wiki_primary_domain', $formData['primary-domain'] );
-			$remoteWiki->trackChange( 'primary-domain',
-				self::getPrimaryDomain( $dbName ),
-				$formData['primary-domain']
+	public static function onManageWikiCoreFormSubmission(
+		IContextSource $context,
+		ModuleFactory $moduleFactory,
+		string $dbname,
+		array $formData
+	): void {
+		$version = self::getMediaWikiVersion( $dbname );
+		$mediawikiVersion = $formData['mediawiki-version'] ?? $version;
+		$mwCore = $moduleFactory->core( $dbname );
+		if ( $mediawikiVersion !== $version && is_dir( self::MEDIAWIKI_DIRECTORY . $mediawikiVersion ) ) {
+			$mwCore->setExtraFieldData(
+				'mediawiki-version', $mediawikiVersion, default: $version
 			);
 		}
 
-		$mwSettings = new ManageWikiSettings( $dbName );
+		$domain = self::getPrimaryDomain( $dbname );
+		$primaryDomain = $formData['primary-domain'] ?? $domain;
+		if ( $primaryDomain !== $domain ) {
+			$mwCore->setExtraFieldData(
+				'primary-domain', $primaryDomain, default: $domain
+			);
+		}
 
-		$articlePath = $mwSettings->list()['wgArticlePath'] ?? '';
+		$mwSettings = $moduleFactory->settings( $dbname );
+		$articlePath = $mwSettings->list( 'wgArticlePath' ) ?? '/wiki/$1';
 		if ( $formData['article-path'] !== $articlePath ) {
-			$mwSettings->modify( [ 'wgArticlePath' => $formData['article-path'] ] );
+			$mwSettings->modify( [ 'wgArticlePath' => $formData['article-path'] ], default: '/wiki/$1' );
 			$mwSettings->commit();
 
-			$remoteWiki->trackChange( 'article-path', $articlePath, $formData['article-path'] );
+			$mwCore->trackChange( 'article-path', $articlePath, $formData['article-path'] );
 
 			$server = self::getServer();
 			$jobQueueGroupFactory = MediaWikiServices::getInstance()->getJobQueueGroupFactory();
-			$jobQueueGroupFactory->makeJobQueueGroup( $dbName )->push(
+			$jobQueueGroupFactory->makeJobQueueGroup( $dbname )->push(
 				new CdnPurgeJob( [
 					'urls' => [
 						$server . '/wiki/',
@@ -1206,12 +1226,12 @@ class MirahezeFunctions {
 			);
 		}
 
-		$mainPageIsDomainRoot = $mwSettings->list()['wgMainPageIsDomainRoot'] ?? false;
+		$mainPageIsDomainRoot = $mwSettings->list( 'wgMainPageIsDomainRoot' ) ?? false;
 		if ( $formData['mainpage-is-domain-root'] !== $mainPageIsDomainRoot ) {
-			$mwSettings->modify( [ 'wgMainPageIsDomainRoot' => $formData['mainpage-is-domain-root'] ] );
+			$mwSettings->modify( [ 'wgMainPageIsDomainRoot' => $formData['mainpage-is-domain-root'] ], default: false );
 			$mwSettings->commit();
 
-			$remoteWiki->trackChange( 'mainpage-is-domain-root',
+			$mwCore->trackChange( 'mainpage-is-domain-root',
 				$mainPageIsDomainRoot,
 				$formData['mainpage-is-domain-root']
 			);

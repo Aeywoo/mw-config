@@ -24,6 +24,7 @@
  * list: adds a list of options (requires: options, which is an array in form of display => internal value).
  * list-multi: see above, just that multiple can be selected.
  * list-multi-bool: see above, just outputs are $this => $bool.
+ * list-multi-int: see above, just saves values as a list of integers rather than strings.
  * matrix: adds an array of "columns" and "rows". Columns are the top array and rows will be the values.
  * preferences: adds a drop-down selection box for selecting multiple user preferences.
  * skin: adds a drop-down selection box for selecting a single enabled skin.
@@ -41,18 +42,19 @@
  *
  * 'requires' can be one of:
  *
- * activeusers: max integer amount of active users a wiki may have in order to be able to modify this setting.
  * articles: max integer amount of articles a wiki may have in order to be able to modify this setting.
  * extensions: array of extensions that must be enabled in order to modify this setting. Different from 'from'. Only use if it requires more than one extension.
+ * files: max integer amount of files a wiki may have in order to be able to modify this setting.
  * pages: max integer amount of pages a wiki may have in order to be able to modify this setting.
  * permissions: array of permissions a user must have to be able to modify this setting. Regardless of this value, a user must always have the managewiki permission.
- * visibility: an array. See below for available options.
  * settings: an array.
+ * users: max integer amount of users a wiki may have in order to be able to modify this setting.
+ * visibility: an array. See below for available options.
  *
  * 'visibility' can be one of:
  *
- * state: a string. Can be either 'private' or 'public'. If set to 'private' this setting will only be visible on private wikis. If set to 'public' it will only be visible on public wikis.
  * permissions: an array. Set to an array of permissions required for the setting to be visible.
+ * state: a string. Can be either 'private' or 'public'. If set to 'private' this setting will only be visible on private wikis. If set to 'public' it will only be visible on public wikis.
  */
 
 $wgManageWikiSettings = [
@@ -67,6 +69,7 @@ $wgManageWikiSettings = [
 			'blockautopromote',
 			'degroup',
 			'disallow',
+			'rangeblock',
 			'tag',
 			'throttle',
 			'warn',
@@ -76,6 +79,7 @@ $wgManageWikiSettings = [
 			'BlockAutopromote' => 'blockautopromote',
 			'Degroup' => 'degroup',
 			'Disallow' => 'disallow',
+			'Rangeblock' => 'rangeblock',
 			'Tag' => 'tag',
 			'Throttle' => 'throttle',
 			'Warn' => 'warn',
@@ -83,7 +87,7 @@ $wgManageWikiSettings = [
 		'overridedefault' => [
 			'block' => true,
 			'blockautopromote' => true,
-			'degroup' => true,
+			'degroup' => false,
 			'disallow' => true,
 			'rangeblock' => false,
 			'tag' => true,
@@ -206,65 +210,6 @@ $wgManageWikiSettings = [
 		'help' => 'Actions that can be restricted.',
 		'requires' => [],
 	],
-	'wgRSSAllowLinkTag' => [
-		'name' => 'Allow links in RSS feeds',
-		'from' => 'rss',
-		'type' => 'check',
-		'overridedefault' => false,
-		'section' => 'other',
-		'help' => 'If enabled, links (&lt;a&gt; tags) will be shown. If disabled, the tags are escaped.',
-		'requires' => [
-			'extensions' => [
-				'rss',
-			],
-		],
-	],
-	'wgRSSItemMaxLength' => [
-		'name' => 'Description length of RSS items',
-		'from' => 'rss',
-		'type' => 'integer',
-		'minint' => 0,
-		'maxint' => 4294967295,
-		'overridedefault' => 200,
-		'section' => 'other',
-		'help' => 'The maximum length of an RSS item\'s body',
-		'requires' => [
-			'extensions' => [
-				'rss',
-			],
-		],
-	],
-	'wgRSSUserAgent' => [
-		'name' => 'RSS User Agent',
-		'from' => 'rss',
-		'type' => 'text',
-		'overridedefault' => 'MediaWiki RSS extension',
-		'section' => 'other',
-		'help' => 'The User Agent that MediaWiki will use to fetch RSS feeds.',
-		'requires' => [
-			'extensions' => [
-				'rss',
-			],
-		],
-	],
-	'wgDataMapsEnableCreateMap' => [
-		'name' => 'DataMaps: Enable CreateMap',
-		'from' => 'datamaps',
-		'type' => 'check',
-		'overridedefault' => true,
-		'section' => 'other',
-		'help' => 'Whether or not to enable the visual map creation dialog.',
-		'requires' => [],
-	],
-	'wgDataMapsAllowExperimentalFeatures' => [
-		'name' => 'DataMaps: Allow experimental features',
-		'from' => 'datamaps',
-		'type' => 'check',
-		'overridedefault' => false,
-		'section' => 'other',
-		'help' => 'Whether or not to enable any disabled-by-default experimental features.',
-		'requires' => [],
-	],
 	'wgProtectSiteLimit' => [
 		'name' => 'Protect Site Limit',
 		'from' => 'protectsite',
@@ -352,33 +297,6 @@ $wgManageWikiSettings = [
 		'help' => 'This option makes a message appear on unapproved revisions indicating this revision has not been approved',
 		'requires' => [],
 	],
-	'wgDisplayFeedsInSidebar' => [
-		'name' => 'Display feeds in sidebar',
-		'from' => 'featuredfeeds',
-		'type' => 'check',
-		'overridedefault' => true,
-		'section' => 'other',
-		'help' => 'This option controls whether or not feeds will be linked to in the sidebar',
-		'requires' => [],
-	],
-	'wgExportAllowListContributors' => [
-		'name' => 'Allow exporting contributor list on Special:Export',
-		'from' => 'mediawiki',
-		'type' => 'check',
-		'overridedefault' => false,
-		'section' => 'other',
-		'help' => 'Whether or not to allow exporting a list of contributors to exported pages on Special:Export',
-		'requires' => [],
-	],
-	'wmgMirahezeFeaturedFeedsInUserLanguage' => [
-		'name' => 'Should feeds honor the user\'s preferred language?',
-		'from' => 'featuredfeeds',
-		'type' => 'check',
-		'overridedefault' => false,
-		'section' => 'other',
-		'help' => 'This option sets <code>$wgFeaturedFeedsDefaults["inUserLanguage"]</code>',
-		'requires' => [],
-	],
 	'wgFlaggedRevsProtection' => [
 		'name' => 'Flagged Revs Protection',
 		'from' => 'flaggedrevs',
@@ -462,6 +380,195 @@ $wgManageWikiSettings = [
 				],
 			],
 		],
+	],
+
+	// Other (extensions without a defined category)
+	'wgDataMapsEnableCreateMap' => [
+		'name' => 'DataMaps: Enable CreateMap',
+		'from' => 'datamaps',
+		'type' => 'check',
+		'overridedefault' => true,
+		'section' => 'other',
+		'help' => 'Whether or not to enable the visual map creation dialog.',
+		'requires' => [],
+	],
+	'wgDataMapsAllowExperimentalFeatures' => [
+		'name' => 'DataMaps: Allow experimental features',
+		'from' => 'datamaps',
+		'type' => 'check',
+		'overridedefault' => false,
+		'section' => 'other',
+		'help' => 'Whether or not to enable any disabled-by-default experimental features.',
+		'requires' => [],
+	],
+	'wgDataMapsEnableFandomPortingTools' => [
+		'name' => 'DataMaps: Enable FANDOM porting tools',
+		'from' => 'datamaps',
+		'type' => 'check',
+		'overridedefault' => false,
+		'section' => 'other',
+		'help' => 'Whether or not to enable compatibility with Map pages created with the FANDOM InteractiveMaps extension. Restricted as this is only temporarily enabled for a maintenance sctipt run',
+		'requires' => [],
+		'requires' => [
+			'permissions' => [
+				'managewiki-restricted',
+			],
+		],
+	],
+	'wgDisplayFeedsInSidebar' => [
+		'name' => 'Display feeds in sidebar',
+		'from' => 'featuredfeeds',
+		'type' => 'check',
+		'overridedefault' => true,
+		'section' => 'other',
+		'help' => 'This option controls whether or not feeds will be linked to in the sidebar',
+		'requires' => [],
+	],
+	'wgExportAllowListContributors' => [
+		'name' => 'Allow exporting contributor list on Special:Export',
+		'from' => 'mediawiki',
+		'type' => 'check',
+		'overridedefault' => false,
+		'section' => 'other',
+		'help' => 'Whether or not to allow exporting a list of contributors to exported pages on Special:Export',
+		'requires' => [],
+	],
+	'wgRSSAllowLinkTag' => [
+		'name' => 'Allow links in RSS feeds',
+		'from' => 'rss',
+		'type' => 'check',
+		'overridedefault' => false,
+		'section' => 'other',
+		'help' => 'If enabled, links (&lt;a&gt; tags) will be shown. If disabled, the tags are escaped.',
+		'requires' => [
+			'extensions' => [
+				'rss',
+			],
+		],
+	],
+	'wgRSSItemMaxLength' => [
+		'name' => 'Description length of RSS items',
+		'from' => 'rss',
+		'type' => 'integer',
+		'minint' => 0,
+		'maxint' => 4294967295,
+		'overridedefault' => 200,
+		'section' => 'other',
+		'help' => 'The maximum length of an RSS item\'s body',
+		'requires' => [
+			'extensions' => [
+				'rss',
+			],
+		],
+	],
+	'wgRSSUserAgent' => [
+		'name' => 'RSS User Agent',
+		'from' => 'rss',
+		'type' => 'text',
+		'overridedefault' => 'MediaWiki RSS extension',
+		'section' => 'other',
+		'help' => 'The User Agent that MediaWiki will use to fetch RSS feeds.',
+		'requires' => [
+			'extensions' => [
+				'rss',
+			],
+		],
+	],
+	'wgWPBBannerProperty' => [
+		'name' => 'WikidataPageBanner Banner Property',
+		'from' => 'wikidatapagebanner',
+		'type' => 'text',
+		'overridedefault' => null,
+		'section' => 'other',
+		'help' => 'Banner property on Wikidata which holds a commons media file. Essential if Wikidata is enabled.',
+		'requires' => [
+			'extensions' => [
+				'wikidata',
+			],
+		],
+	],
+	'wgWPBEnableDefaultBanner' => [
+		'name' => 'WikidataPageBanner Enable Default Banner',
+		'from' => 'wikidatapagebanner',
+		'type' => 'check',
+		'overridedefault' => false,
+		'section' => 'other',
+		'help' => 'Enables the default banner image on pages without the use of <code>{{PAGENAME}}</code>.',
+		'requires' => [],
+	],
+	'wgWPBEnableHeadingOverride' => [
+		'name' => 'WikidataPageBanner Enable Heading Override',
+		'from' => 'wikidatapagebanner',
+		'type' => 'check',
+		'overridedefault' => true,
+		'section' => 'other',
+		'help' => 'Determintes whether the page title is displayed overlayed on the banner image or not.',
+		'requires' => [],
+	],
+	'wgWPBEnableMainPage' => [
+		'name' => 'WikidataPageBanner Enable Main Page',
+		'from' => 'wikidatapagebanner',
+		'type' => 'check',
+		'overridedefault' => false,
+		'section' => 'other',
+		'help' => 'Determines whether a banner is allowed to be shown on the Main Page or not.',
+		'requires' => [],
+	],
+	'wgWPBEnablePageImagesBanners' => [
+		'name' => 'WikidataPageBanner Enable Page Images Banner',
+		'from' => 'wikidatapagebanner',
+		'type' => 'check',
+		'overridedefault' => true,
+		'section' => 'other',
+		'help' => 'When set to true alongside Extension:PageImages, it will use an image from the current page if no Wikidata or local image is defined.',
+		'requires' => [
+			'extensions' => [
+				'pageimages',
+			],
+		],
+	],
+	'wgWPBDisplaySubtitleAfterBannerSkins' => [
+		'name' => 'WikidataPageBanner Display Subtitle After Banner Skins',
+		'from' => 'wikidatapagebanner',
+		'type' => 'skins',
+		'overridedefault' => [
+			'minerva',
+		],
+		'section' => 'other',
+		'help' => 'Is an array of names of skins that should have the banner displayed in the site-notice area instead of the page subtitle.',
+		'requires' => [],
+	],
+	'wgWPBImage' => [
+		'name' => 'WikidataPageBanner Default Image',
+		'from' => 'wikidatapagebanner',
+		'type' => 'text',
+		'overridedefault' => false,
+		'section' => 'other',
+		'help' => 'Is used to set the default banner image without the \'File:\' prefix to be displayed on the allowed pages and namespaces.',
+		'requires' => [],
+	],
+	'wgWPBStandardSizes' => [
+		'name' => 'WikidataPageBanner Standard Sizes',
+		'from' => 'wikidatapagebanner',
+		'type' => 'integers',
+		'overridedefault' => [
+			320,
+			640,
+			1280,
+			2560,
+		],
+		'section' => 'other',
+		'help' => 'Is an array of standard predefined screen widths which increases in order of size.',
+		'requires' => [],
+	],
+	'wmgMirahezeFeaturedFeedsInUserLanguage' => [
+		'name' => 'Should feeds honor the user\'s preferred language?',
+		'from' => 'featuredfeeds',
+		'type' => 'check',
+		'overridedefault' => false,
+		'section' => 'other',
+		'help' => 'This option sets <code>$wgFeaturedFeedsDefaults["inUserLanguage"]</code>',
+		'requires' => [],
 	],
 
 	// Beta Feature related stuff
@@ -709,6 +816,70 @@ $wgManageWikiSettings = [
 	],
 
 	// Editing
+	'wgCampaignEventsProgramsAndEventsDashboardInstance' => [
+		'name' => 'CampaignEvents Programs and Events Dashboard Instance',
+		'from' => 'campaignevents',
+		'type' => 'list',
+		'options' => [
+			'Production' => 'production',
+			'Staging' => 'staging',
+		],
+		'overridedefault' => null,
+		'section' => 'editing',
+		'help' => 'Determines which instance of the P&E Dashboard should be used.',
+		'requires' => [],
+	],
+	'wgCampaignEventsEnableWikimediaParticipantQuestions' => [
+		'name' => 'CampaignEvents Enable Wikimedia Participant Questions',
+		'from' => 'campaignevents',
+		'type' => 'check',
+		'overridedefault' => true,
+		'section' => 'editing',
+		'help' => 'Whether to enable Wikimedia-specific questions that can be asked to participants, such as whether they belong to a Wikimedia affiliate.',
+		'requires' => [],
+	],
+	'wgEditSimilarMaxResultsPool' => [
+		'name' => 'EditSimilar Max Results Pool',
+		'from' => 'editsimilar',
+		'type' => 'integer',
+		'minint' => 0,
+		'maxint' => 100,
+		'overridedefault' => 50,
+		'section' => 'editing',
+		'help' => 'This is the maximum pool of results to choose randomly from.',
+		'requires' => [],
+	],
+	'wgEditSimilarMaxResultsToDisplay' => [
+		'name' => 'EditSimilar Max Results to Display',
+		'from' => 'editsimilar',
+		'type' => 'integer',
+		'minint' => 0,
+		'maxint' => 100,
+		'overridedefault' => 3,
+		'section' => 'editing',
+		'help' => 'The maximum number of chosen results to display.',
+		'requires' => [],
+	],
+	'wgEditSimilarCounterValue' => [
+		'name' => 'EditSimilar Counter Value',
+		'from' => 'editsimilar',
+		'type' => 'integer',
+		'minint' => 0,
+		'maxint' => 10,
+		'overridedefault' => 1,
+		'section' => 'editing',
+		'help' => 'This number specifies per which number of edits will show the results\' message, this means every time results are found a message is shown.',
+		'requires' => [],
+	],
+	'wgEditSimilarAlwaysShowThanks' => [
+		'name' => 'EditSimilar Always Show Thanks',
+		'from' => 'editsimilar',
+		'type' => 'check',
+		'overridedefault' => false,
+		'section' => 'editing',
+		'help' => 'Whether to thank for an edit even when there are no results.',
+		'requires' => [],
+	],
 	'wmgWikiLicense' => [
 		'name' => 'Content License',
 		'from' => 'mediawiki',
@@ -1432,7 +1603,7 @@ $wgManageWikiSettings = [
 		'type' => 'check',
 		'overridedefault' => false,
 		'section' => 'parserfunctions',
-		'help' => 'This option adds support a couple of functions for basic string handling. Example: #pos function returns the position of a given search term within the string. You can learn more in MediaWiki\'s <a href="https://www.mediawiki.org/wiki/Module:String">documentation page</a>',
+		'help' => 'This option adds support a couple of functions for basic string handling. Example: #pos function returns the position of a given search term within the string. You can learn more in MediaWiki\'s [https://www.mediawiki.org/wiki/Module:String documentation page].',
 		'requires' => [],
 	],
 	'wgAllowDisplayTitle' => [
@@ -1442,7 +1613,7 @@ $wgManageWikiSettings = [
 		'type' => 'check',
 		'overridedefault' => true,
 		'section' => 'parserfunctions',
-		'help' => 'Allows use of {{DISPLAYTITLE}} magic word.',
+		'help' => 'Allows use of <nowiki>{{DISPLAYTITLE}}</nowiki> magic word.',
 		'requires' => [],
 	],
 	'wgRestrictDisplayTitle' => [
@@ -1452,7 +1623,7 @@ $wgManageWikiSettings = [
 		'type' => 'check',
 		'overridedefault' => true,
 		'section' => 'parserfunctions',
-		'help' => 'Restrict {{DISPLAYTITLE}} to titles that normalize to the same canonical database key. Wikis with NoTitle extension installed have this config unset.',
+		'help' => 'Restrict <nowiki>{{DISPLAYTITLE}}</nowiki> to titles that normalize to the same canonical database key. Wikis with NoTitle extension installed have this config unset.',
 		'requires' => [],
 	],
 	'wgPortableInfoboxResponsiblyOpenCollapsed' => [
@@ -1471,6 +1642,15 @@ $wgManageWikiSettings = [
 		'overridedefault' => false,
 		'section' => 'parserfunctions',
 		'help' => 'Make embedded images link to their file description page.',
+		'requires' => [],
+	],
+	'wgPortableInfoboxUseHeadings' => [
+		'name' => 'Portable Infobox Use Headings',
+		'from' => 'portableinfobox',
+		'type' => 'check',
+		'overridedefault' => true,
+		'section' => 'parserfunctions',
+		'help' => 'Whether or not to use heading tags for infobox titles and group headers (may cause incompatibilities with some extensions).',
 		'requires' => [],
 	],
 	'wgShortDescriptionEnableTagline' => [
@@ -1525,6 +1705,149 @@ $wgManageWikiSettings = [
 		'overridedefault' => true,
 		'section' => 'parserfunctions',
 		'help' => 'For file type icons, whether or not to use the file name (excluding the file extension) as the tooltip. If disabled, the tooltip will be the page where the parser function is used.',
+		'requires' => [],
+	],
+	'wgLinkTitlesCheckRedirect' => [
+		'name' => 'Link Titles Check Redirect',
+		'from' => 'linktitles',
+		'type' => 'check',
+		'overridedefault' => true,
+		'section' => 'parserfunctions',
+		'help' => 'If any links on the current page are redirects to the current page, then it returns the page title as-is and unlinks it.',
+		'requires' => [],
+	],
+	'wgLinkTitlesEnableNoTargetMagicWord' => [
+		'name' => 'Link Titles No Target Magic Word',
+		'from' => 'linktitles',
+		'type' => 'check',
+		'overridedefault' => false,
+		'section' => 'parserfunctions',
+		'help' => 'If a page that is linked on the current page contains the magic word <nowiki>__NOAUTOLINKTARGET__</nowiki>, then the page title is returned as-is and is unlinked.',
+		'requires' => [],
+	],
+	'wgLinkTitlesFirstOnly' => [
+		'name' => 'Link Titles First Only',
+		'from' => 'linktitles',
+		'type' => 'check',
+		'overridedefault' => true,
+		'section' => 'parserfunctions',
+		'help' => 'Only link the first occurence of a pages title on any given page, this does not cover piped links that replace page titles e.g. <nowiki>[[Foobar|Foo Bar]]</nowiki>.',
+		'requires' => [],
+	],
+	'wgLinkTitlesMinimumTitleLength' => [
+		'name' => 'Link Titles Minimum Title Length',
+		'from' => 'linktitles',
+		'type' => 'integer',
+		'minint' => 1,
+		'maxint' => 100,
+		'overridedefault' => 4,
+		'section' => 'parserfunctions',
+		'help' => 'Only link to page titles that have a certain minimum length.',
+		'requires' => [
+			'permissions' => [
+				'managewiki-restricted',
+			],
+		],
+	],
+	'wgLinkTitlesParseHeadings' => [
+		'name' => 'Link Titles Parse Headings',
+		'from' => 'linktitles',
+		'type' => 'check',
+		'overridedefault' => false,
+		'section' => 'parserfunctions',
+		'help' => 'Whether or not to add links to page headings, this only applies if $wgLinkTitlesParseOnEdit is enabled.',
+		'requires' => [
+			'settings' => [
+				'setting' => 'wgLinkTitlesParseOnEdit',
+				'value' => true,
+			],
+		],
+	],
+	'wgLinkTitlesParseOnEdit' => [
+		'name' => 'Link Titles Parse On Edit',
+		'from' => 'linktitles',
+		'type' => 'check',
+		'overridedefault' => true,
+		'section' => 'parserfunctions',
+		'help' => 'Parse page content whenever an edit is saved by adding links through wikitext, unless the "minor edit" box is checked.',
+		'requires' => [],
+	],
+	'wgLinkTitlesParseOnRender' => [
+		'name' => 'Link Titles Parse On Render',
+		'from' => 'linktitles',
+		'type' => 'check',
+		'overridedefault' => false,
+		'section' => 'parserfunctions',
+		'help' => 'Parse page content whenever the page is rendered for viewing, instead of doing so whenever the page is saved.',
+		'requires' => [],
+	],
+	'wgLinkTitlesPreferShortTitles' => [
+		'name' => 'Link Titles Prefer Short Titles',
+		'from' => 'linktitles',
+		'type' => 'check',
+		'overridedefault' => false,
+		'section' => 'parserfunctions',
+		'help' => 'Parsing will begin with shorter page titles first before longer page titles.',
+		'requires' => [],
+	],
+	'wgLinkTitlesSmartMode' => [
+		'name' => 'Link Titles Smart Mode',
+		'from' => 'linktitles',
+		'type' => 'check',
+		'overridedefault' => true,
+		'section' => 'parserfunctions',
+		'help' => 'With Smart Mode enabled, it will be able to check page titles in both case-sensitive and case-insensitive ways to ensure the link you provided exists, if the page name is spelt differently to what it found, if you type a page title wrong, it will add the text you provided as the title of a piped wikitext link.',
+		'requires' => [],
+	],
+	'wgLinkTitlesSameNamespace' => [
+		'name' => 'Link Titles Same Namespace',
+		'from' => 'linktitles',
+		'type' => 'check',
+		'overridedefault' => true,
+		'section' => 'parserfunctions',
+		'help' => 'If you do not want the same namespace as the target page included in the possible namespaces, set this to false. If $wgLinkTitlesSameNamespace is false and $wgLinkTitlesTargetNamespaces is empty, no links will be added at all because there is no target namespace.',
+		'requires' => [],
+	],
+	'wgLinkTitlesSkipTemplates' => [
+		'name' => 'Link Titles Skip Templates',
+		'from' => 'linktitles',
+		'type' => 'check',
+		'overridedefault' => false,
+		'section' => 'parserfunctions',
+		'help' => 'If set to true, then it will not parse the variable text of templates, leave the entire text between the curly brackets untouched. If set to false all text after the pipe will be parsed.',
+		'requires' => [],
+	],
+	'wgLinkTitlesSpecialPageReloadAfter' => [
+		'name' => 'Link Titles Special Page Reload After',
+		'from' => 'linktitles',
+		'type' => 'integer',
+		'minint' => 1,
+		'maxint' => 1800,
+		'overridedefault' => 1,
+		'section' => 'parserfunctions',
+		'help' => 'The Special:LinkTitles page performs batch processing of pages by repeatedly calling itself, as a measure to prevent timeouts of the server.',
+		'requires' => [
+			'permissions' => [
+				'managewiki-restricted',
+			],
+		],
+	],
+	'wgLinkTitlesWordStartOnly' => [
+		'name' => 'Link Titles Word Start Only',
+		'from' => 'linktitles',
+		'type' => 'check',
+		'overridedefault' => false,
+		'section' => 'parserfunctions',
+		'help' => 'Restrict the linking of occurrences of page titles to the start of the word. Enable $wgLinkTitlesWordEndOnly if you want exact page title case matching.',
+		'requires' => [],
+	],
+	'wgLinkTitlesWordEndOnly' => [
+		'name' => 'Link Titles Word End Only',
+		'from' => 'linktitles',
+		'type' => 'check',
+		'overridedefault' => false,
+		'section' => 'parserfunctions',
+		'help' => 'Restrict the linking of occurences of page titles to the end of the word. Enable $wgLinkTitlesWordStartOnly if you want exact page title case matching.',
 		'requires' => [],
 	],
 
@@ -2262,6 +2585,33 @@ $wgManageWikiSettings = [
 		'help' => 'This configuration variable toggles if the signature of the welcomer should be the one they have set in their preferences.',
 		'requires' => [],
 	],
+	'wgNewUserSuppressRC' => [
+		'name' => 'NewUserMessage Suppress In Recent Changes',
+		'from' => 'newusermessage',
+		'type' => 'check',
+		'overridedefault' => false,
+		'section' => 'notifications',
+		'help' => 'Hides the new user message creation from Special:RecentChanges.',
+		'requires' => [],
+	],
+	'wgNewUserMinorEdit' => [
+		'name' => 'NewUserMessage Minor Edit',
+		'from' => 'newusermessage',
+		'type' => 'check',
+		'overridedefault' => true,
+		'section' => 'notifications',
+		'help' => 'Sets the new user message creation as a minor edit.',
+		'requires' => [],
+	],
+	'wgNewUserMessageOnAutoCreate' => [
+		'name' => 'NewUserMessage On Auto Create',
+		'from' => 'newusermessage',
+		'type' => 'check',
+		'overridedefault' => false,
+		'section' => 'notifications',
+		'help' => 'Sends a new user message when a new user is auto-created by CentralAuth.',
+		'requires' => [],
+	],
 
 	// Permissions
 	'wgWhitelistRead' => [
@@ -2365,7 +2715,7 @@ $wgManageWikiSettings = [
 		'name' => 'RecentChanges Link Days',
 		'from' => 'mediawiki',
 		'global' => true,
-		'type' => 'list-multi',
+		'type' => 'list-multi-int',
 		'options' => [
 			'1 (86400 seconds)' => 1,
 			'3 (259200 seconds)' => 3,
@@ -2386,7 +2736,7 @@ $wgManageWikiSettings = [
 		'name' => 'RecentChanges Link Limits',
 		'from' => 'mediawiki',
 		'global' => true,
-		'type' => 'list-multi',
+		'type' => 'list-multi-int',
 		'options' => [
 			'50' => 50,
 			'100' => 100,
@@ -2603,7 +2953,7 @@ $wgManageWikiSettings = [
 		'name' => 'Twitter Card Type (WikiSEO)',
 		'from' => 'wikiseo',
 		'type' => 'list',
-		'overridedefault' => 'summery_large_image',
+		'overridedefault' => 'summary_large_image',
 		'section' => 'seo',
 		'options' => [
 			'Summary' => 'summary',
@@ -3124,7 +3474,7 @@ $wgManageWikiSettings = [
 		'type' => 'text',
 		'overridedefault' => "https://$wmgUploadHostname/metawiki/3/35/Miraheze_Logo.svg",
 		'section' => 'styling',
-		'help' => 'This will replace Miraheze\'s default logo. See <a href="https://meta.miraheze.org/wiki/ManageWiki#How_do_I_change_my_logo.2Ffavicon.3F">this link</a> for how you can change it. Also sets the value of <code>$wgLogos[\'1x\']</code>.',
+		'help' => 'This will replace Miraheze\'s default logo. See [[m:Special:MyLanguage/ManageWiki|this link]] for how you can change it. Also sets the value of <code>$wgLogos[\'1x\']</code>.',
 		'requires' => [],
 	],
 	'wgFavicon' => [
@@ -3134,7 +3484,7 @@ $wgManageWikiSettings = [
 		'type' => 'text',
 		'overridedefault' => '/favicon.ico',
 		'section' => 'styling',
-		'help' => 'A favicon is a shortcut image that is displayed on your visitor\'s browser address bar and in the bookmarks page. Most often it is a smaller version of the logo. See <a href="https://meta.miraheze.org/wiki/ManageWiki#How_do_I_change_my_logo.2Ffavicon.3F">this link</a> for how you can add one.',
+		'help' => 'A favicon is a shortcut image that is displayed on your visitor\'s browser address bar and in the bookmarks page. Most often it is a smaller version of the logo. See [[m:Special:MyLanguage/ManageWiki|this link]] for how you can add one.',
 		'requires' => [],
 	],
 	'wgAppleTouchIcon' => [
@@ -3144,7 +3494,7 @@ $wgManageWikiSettings = [
 		'type' => 'text',
 		'overridedefault' => '/apple-touch-icon.png',
 		'section' => 'styling',
-		'help' => 'Favicon for Apple mobile devices. See <a href="https://meta.miraheze.org/wiki/ManageWiki#How_do_I_change_my_logo.2Ffavicon.3F">this link</a> on how you can add one.',
+		'help' => 'Favicon for Apple mobile devices. See [[m:Special:MyLanguage/ManageWiki|this link]] on how you can add one.',
 		'requires' => [],
 	],
 	'wgWordmark' => [
@@ -3210,7 +3560,7 @@ $wgManageWikiSettings = [
 		'type' => 'text',
 		'overridedefault' => '',
 		'section' => 'styling',
-		'help' => 'Set to your wiki\'s page name at <a href="https://www.wikiapiary.com">Wikiapiary</a> to add the monitored by Wikiapary footer icon. If you do not have an article there for your wiki, please leave this field blank.',
+		'help' => 'Set to your wiki\'s page name at [https://www.wikiapiary.com Wikiapiary] to add the monitored by Wikiapary footer icon. If you do not have an article there for your wiki, please leave this field blank.',
 		'requires' => [],
 	],
 	'wgCosmosEnabledRailModules' => [
@@ -3440,87 +3790,6 @@ $wgManageWikiSettings = [
 		'help' => 'Size (in px) of image thumbnails used in infoboxes.',
 		'requires' => [],
 	],
-	'wgEvelutionLeftPersonalLinks' => [
-		'name' => 'Evelution Left Personal Links',
-		'from' => 'evelution',
-		'type' => 'check',
-		'overridedefault' => false,
-		'section' => 'styling',
-		'help' => 'Changes the alignment of the <code>.upper-links</code> container in the personal links from <code>center</code> to <code>left</code>.',
-		'requires' => [],
-	],
-	'wgEvelutionDisableColorManagement' => [
-		'name' => 'Evelution Disable Color Management',
-		'from' => 'evelution',
-		'type' => 'check',
-		'overridedefault' => false,
-		'section' => 'styling',
-		'help' => 'Disables access to visual colors and the theme chooser. Likewise, it uses a hardcoded theme with colors taken from system colors.',
-		'requires' => [],
-	],
-	'wgEvelutionDisableRightRail' => [
-		'name' => 'Evelution Disable Right Rail',
-		'from' => 'evelution',
-		'type' => 'check',
-		'overridedefault' => false,
-		'section' => 'styling',
-		'help' => 'Disables the right rail that appears on all pages (except special pages, file pages, MediaWiki pages, and the main page).',
-		'requires' => [],
-	],
-	'wgEvelutionServerMode' => [
-		'name' => 'Evelution Server Mode',
-		'from' => 'evelution',
-		'type' => 'check',
-		'overridedefault' => false,
-		'section' => 'styling',
-		'help' => 'Changes the layout to be more server/development wiki-friendly (e.g. no desktop local navigation, addition of left actions link before the content (which has the local navigation menus), smaller page header title, full width small breakpoint size, and no right rail on the help and project namespaces).',
-		'requires' => [],
-	],
-	'wgEvelutionStickyRail' => [
-		'name' => 'Evelution Sticky Rail',
-		'from' => 'evelution',
-		'type' => 'check',
-		'overridedefault' => true,
-		'section' => 'styling',
-		'help' => 'Removes the sticky behavior of right rail on larger screens with 700 pixels or more. Requires that <code>$wgEvelutionDisableRightRail</code> not be enabled in order for this to work.',
-		'requires' => [],
-	],
-	'wgEvelutionForceFullWidth' => [
-		'name' => 'Evelution Force Full Width',
-		'from' => 'evelution',
-		'type' => 'check',
-		'overridedefault' => false,
-		'section' => 'styling',
-		'help' => 'Always forces the content area to its maximum width.',
-		'requires' => [],
-	],
-	'wgEvelutionDisableRightRailFromSpecificPages' => [
-		'name' => 'Evelution Disable Right Rail From Specific Pages',
-		'from' => 'evelution',
-		'type' => 'wikipages',
-		'overridedefault' => [],
-		'section' => 'styling',
-		'help' => 'Disables the right rail that appears on specific pages. Requires that <code>$wgEvelutionDisableRightRail</code> not be enabled in order for this to work.',
-		'requires' => [],
-	],
-	'wgEvelutionMonoLogo' => [
-		'name' => 'Evelution Mono Logo',
-		'from' => 'evelution',
-		'type' => 'check',
-		'overridedefault' => false,
-		'section' => 'styling',
-		'help' => 'Makes the wiki\'s logo behave like the wiki\'s wordmark (making it masked so it adapts any color). This is highly recommended for plain black or white logos.',
-		'requires' => [],
-	],
-	'wgEvelutionChangeMessageBoxesToBanners' => [
-		'name' => 'Evelution Change Message Boxes To Banners',
-		'from' => 'evelution',
-		'type' => 'check',
-		'overridedefault' => false,
-		'section' => 'styling',
-		'help' => 'All errorboxes, warningboxes, successboxes and messageboxes except the ones with the <code>.noconvert</code> CSS class will be converted into banner notifications.',
-		'requires' => [],
-	],
 	'wgHasSomeColoursColourOne' => [
 		'name' => 'HasSomeColours Colour One',
 		'from' => 'hassomecolours',
@@ -3643,6 +3912,42 @@ $wgManageWikiSettings = [
 		'help' => 'Set to the filename, excluding the File namespace, of a wordmark to use for the Timeless skin.',
 		'requires' => [],
 	],
+	'wgLakeusShowRepositoryLink' => [
+		'name' => 'Lakeus Repository Link',
+		'from' => 'lakeus',
+		'type' => 'check',
+		'overridedefault' => true,
+		'section' => 'styling',
+		'help' => 'Displays a link to the skin\'s repository in the footer.',
+		'requires' => [],
+	],
+	'wgLakeusSiteNoticeHasBorder' => [
+		'name' => 'Lakeus Site Notice Has Border',
+		'from' => 'lakeus',
+		'type' => 'check',
+		'overridedefault' => false,
+		'section' => 'styling',
+		'help' => 'Adds a skin provided border for the site notice.',
+		'requires' => [],
+	],
+	'wgLakeusShouldAnimatePortlets' => [
+		'name' => 'Lakeus Should Animate Portlets',
+		'from' => 'lakeus',
+		'type' => 'check',
+		'overridedefault' => false,
+		'section' => 'styling',
+		'help' => 'Enables fade-in and fade-out effects when opening or closing portlets.',
+		'requires' => [],
+	],
+	'wgLakeusShowStickyTOC' => [
+		'name' => 'Lakeus Show Sticky TOC',
+		'from' => 'lakeus',
+		'type' => 'check',
+		'overridedefault' => false,
+		'section' => 'styling',
+		'help' => 'Shows the sticky TOC.',
+		'requires' => [],
+	],
 	'wgMetrolookDownArrow' => [
 		'name' => 'Metrolook Down Arrow',
 		'from' => 'metrolook',
@@ -3667,7 +3972,7 @@ $wgManageWikiSettings = [
 		'type' => 'check',
 		'overridedefault' => true,
 		'section' => 'styling',
-		'help' => 'When "Metrolook Down Arrow" is enabled and "Metrolook Bartile" is enabled, the tile menu will be generated from <a href="/wiki/MediaWiki:Metrolook-tiles">MediaWiki:Metrolook-tiles</a>. If "Metrolook Down Arrow" is set and "Metrolook Bartile" is not set, then the tile menu will be generated from <a href="/wiki/MediaWiki:Metrolook-tiles-second">MediaWiki:Metrolook-tiles-second</a>.',
+		'help' => 'When "Metrolook Down Arrow" is enabled and "Metrolook Bartile" is enabled, the tile menu will be generated from [[MediaWiki:Metrolook-tiles]]. If "Metrolook Down Arrow" is set and "Metrolook Bartile" is not set, then the tile menu will be generated from [[MediaWiki:Metrolook-tiles-second]].',
 		'requires' => [],
 	],
 	'wgMetrolookMobile' => [
@@ -3798,6 +4103,15 @@ $wgManageWikiSettings = [
 		'overridedefault' => 6,
 		'section' => 'styling',
 		'help' => 'Max number of search suggestions',
+		'requires' => [],
+	],
+	'wgCitizenEnableCommandPalette' => [
+		'name' => 'Citizen Enable Command Palette',
+		'from' => 'citizen',
+		'type' => 'check',
+		'overridedefault' => false,
+		'section' => 'styling',
+		'help' => 'Enable the experimental command palette feature',
 		'requires' => [],
 	],
 	'wgCitizenEnableCJKFonts' => [
@@ -4040,6 +4354,15 @@ $wgManageWikiSettings = [
 		'help' => 'Whether to show indicators on a page when it is protected.',
 		'requires' => [],
 	],
+	'wgDynamicSidebarUsePageCategories' => [
+		'name' => 'DynamicSidebar Enable Page Category Sidebars',
+		'from' => 'dynamicsidebar',
+		'type' => 'check',
+		'overridedefault' => false,
+		'section' => 'styling',
+		'help' => 'Allow creating sidebars that will be shown on pages in specific categories.',
+		'requires' => [],
+	],
 
 	// Wikibase
 	'wmgWikibaseRepoUrl' => [
@@ -4118,6 +4441,8 @@ $wgManageWikiSettings = [
 		'name' => 'Property Suggester Min Probability',
 		'from' => 'propertysuggester',
 		'type' => 'float',
+		'minfloat' => 0.0,
+		'maxfloat' => 1.0,
 		'overridedefault' => 0.05,
 		'section' => 'wikibase',
 		'help' => 'A float that sets a minimum threshold for suggestions.',
@@ -4190,9 +4515,9 @@ $wgManageWikiSettings = [
 		'name' => 'Enable Statements parser function for UnlinkedWikibase',
 		'from' => 'unlinkedwikibase',
 		'type' => 'check',
-		'overridedefault' => 'false',
+		'overridedefault' => false,
 		'section' => 'wikibase',
-		'help' => 'Allow the use of <code>{{#statements:}}</code> parser functions with UnlinkedWikibase.',
+		'help' => 'Allow the use of <code><nowiki>{{#statements:}}</nowiki></code> parser functions with UnlinkedWikibase.',
 		'requires' => [],
 	],
 	'wgWBQualityConstraintsInstanceOfId' => [

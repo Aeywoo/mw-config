@@ -3,15 +3,12 @@
 namespace Miraheze\Config\Tests\ManageWiki;
 
 class ExtensionsTest extends ManageWikiTestCase {
+
 	public function getSchema(): array {
 		$installOrRemove = [
 			'type' => 'array',
 			'additionalProperties' => false,
 			'properties' => [
-				'files' => [
-					'type' => 'array',
-					'description' => 'mapped to location => source.',
-				],
 				'mwscript' => [
 					'type' => 'array',
 					'description' => 'mapped to script path => array of options.',
@@ -93,10 +90,6 @@ class ExtensionsTest extends ManageWikiTestCase {
 							'type' => 'array',
 							'additionalProperties' => false,
 							'properties' => [
-								'activeusers' => [
-									'type' => 'integer',
-									'description' => 'max integer amount of active users a wiki may have in order to enable this extension.',
-								],
 								'articles' => [
 									'type' => 'integer',
 									'description' => 'max integer amount of articles a wiki may have in order to enable this extension.',
@@ -118,6 +111,10 @@ class ExtensionsTest extends ManageWikiTestCase {
 										]
 									]
 								],
+								'files' => [
+									'type' => 'integer',
+									'description' => 'max integer amount of files a wiki may have in order to enable this extension.',
+								],
 								'pages' => [
 									'type' => 'integer',
 									'description' => 'max integer amount of pages a wiki may have in order to enable this extension.',
@@ -127,6 +124,10 @@ class ExtensionsTest extends ManageWikiTestCase {
 									'items' => [
 										'type' => 'string'
 									]
+								],
+								'users' => [
+									'type' => 'integer',
+									'description' => 'max integer amount of users a wiki may have in order to enable this extension.',
 								],
 								'visibility' => [
 									'type' => 'array',
@@ -170,7 +171,7 @@ class ExtensionsTest extends ManageWikiTestCase {
 	}
 
 	/** @inheritDoc */
-	public function configProvider(): array {
+	public static function configProvider(): array {
 		return [
 			'A valid configuration should be passed the validation.' => [
 				[

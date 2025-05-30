@@ -6,6 +6,8 @@ use MediaWiki\Html\Html;
 use MediaWiki\Password\InvalidPassword;
 use MediaWiki\PoolCounter\PoolCounterClient;
 use MediaWiki\SpecialPage\SpecialPage;
+use Miraheze\MirahezeMagic\Maintenance\GenerateManageWikiBackup;
+use Miraheze\MirahezeMagic\Maintenance\SwiftDump;
 use Miraheze\MirahezeMagic\MirahezeIRCRCFeedFormatter;
 
 $wgHooks['CreateWikiDataFactoryBuilder'][] = 'MirahezeFunctions::onCreateWikiDataFactoryBuilder';
@@ -47,6 +49,12 @@ if ( $wi->dbname !== 'ldapwikiwiki' && $wi->dbname !== 'srewiki' ) {
 	$wgCentralAuthStrict = true;
 
 	$wgCentralAuthAutoLoginWikis = $wmgCentralAuthAutoLoginWikis;
+
+	if ( version_compare( MW_VERSION, '1.44', '>=' ) ) {
+		$wgCentralAuthEnableSul3 = false;
+	} else {
+		$wgCentralAuthEnableSul3 = [];
+	}
 
 	if ( isset( $wgAuthManagerAutoConfig['primaryauth'][LocalPasswordPrimaryAuthenticationProvider::class] ) ) {
 		$wgAuthManagerAutoConfig['primaryauth'][LocalPasswordPrimaryAuthenticationProvider::class]['args'][0]['loginOnly'] = true;
@@ -262,7 +270,7 @@ if ( $cwClosed ) {
 if ( !$cwPrivate ) {
 	$wgRCFeeds['irc'] = [
 		'formatter' => MirahezeIRCRCFeedFormatter::class,
-		'uri' => 'udp://10.0.17.143:5070',
+		'uri' => 'udp://10.0.17.143:' . [ 5070, 5072 ][array_rand( [ 5070, 5072 ] )],
 		'add_interwiki_prefix' => false,
 		'omit_bots' => true,
 	];
@@ -333,7 +341,7 @@ $wgDataDump = [
 		],
 		'generate' => [
 			'type' => 'mwscript',
-			'script' => "$IP/extensions/MirahezeMagic/maintenance/swiftDump.php",
+			'script' => SwiftDump::class,
 			'options' => [
 				'--filename',
 				'${filename}'
@@ -350,7 +358,7 @@ $wgDataDump = [
 		'file_ending' => '.json',
 		'generate' => [
 			'type' => 'mwscript',
-			'script' => "$IP/extensions/MirahezeMagic/maintenance/generateManageWikiBackup.php",
+			'script' => GenerateManageWikiBackup::class,
 			'options' => [
 				'--filename',
 				'${filename}'
@@ -445,7 +453,7 @@ if ( !$wi->isExtensionActive( 'wikiseo' ) ) {
 
 // $wgFooterIcons
 if ( (bool)$wmgWikiapiaryFooterPageName ) {
-	$wgFooterIcons['poweredby']['wikiapiary'] = [
+	$wgFooterIcons['wikiapairy']['wikiapiary'] = [
 		'src' => 'https://static.wikitide.net/commonswiki/b/b4/Monitored_by_WikiApiary.png',
 		'url' => 'https://wikiapiary.com/wiki/' . str_replace( ' ', '_', $wmgWikiapiaryFooterPageName ),
 		'alt' => 'Monitored by WikiApiary'
@@ -561,7 +569,6 @@ if ( preg_match( '/(mirabeta|nexttide)\.org$/', $wi->server ) ) {
 		'(.*\.)?mirabeta\.org',
 		'(.*\.)?nexttide\.org',
 	];
-	$wgParserMigrationEnableQueryString = true;
 }
 
 if ( !preg_match( '/(miraheze|mirabeta|nexttide|wikitide)\.org$/', $wi->server ) ) {
@@ -569,6 +576,13 @@ if ( !preg_match( '/(miraheze|mirabeta|nexttide|wikitide)\.org$/', $wi->server )
 		$wgUrlShortenerAllowedDomains,
 		[ preg_quote( str_replace( 'https://', '', $wi->server ) ) ]
 	);
+}
+
+// DataMaps
+if ( $wi->isExtensionActive( 'Interactive Data Maps' ) ) {
+	if ( $wgDataMapsEnableFandomPortingTools ) {
+		$wgDataMapsNamespaceId = 2900;
+	}
 }
 
 // JsonConfig
@@ -628,7 +642,7 @@ if ( $wi->isExtensionActive( 'TimedMediaHandler' ) ) {
 	// Note compression of second pass is "spiky", alternating between
 	// single-threaded and multithreaded portions, so you can somewhat
 	// overcommit process threads per CPU thread.
-	$wgFFmpegThreads = 4;
+	$wgFFmpegThreads = 8;
 
 	// HD transcodes of full-length films/docs/conference vids can
 	// take several hours, and sometimes over 12. Bump up from default

@@ -16,22 +16,25 @@
  *
  * 'requires' can be one of:
  *
- * activeusers: max integer amount of active users a wiki may have in order to enable this extension.
  * articles: max integer amount of articles a wiki may have in order to enable this extension.
  * extensions: array of other extensions that must be enabled in order to enable this extension.
+ * files: max integer amount of files a wiki may have in order to enable this extension.
  * pages: max integer amount of pages a wiki may have in order to enable this extension.
  * permissions: array of permissions a user must have to be able to enable this extension. Regardless of this value, a user must always have the managewiki permission.
+ * users: max integer amount of users a wiki may have in order to enable this extension.
  * visibility['state']: can be either 'private' or 'public'. If set to 'private' this extension can only be enabled on private wikis. If set to 'public' it can only be enabled on public wikis.
  *
  * 'install'/'remove' can be one of:
  *
- * files: array, mapped to location => source.
  * mwscript: array, mapped to script path => array of options.
  * namespaces: array of which namespaces and namespace data to install with extension; 'remove' only needs namespace ID.
  * permissions: array of which permissions to install with extension.
  * settings: array of ManageWikiSettings to modify when the extension is enabled, mapped variable => value.
  * sql: array of sql files to install with extension, mapped table name => sql file path.
  */
+
+use Miraheze\MirahezeMagic\Maintenance\CreateCargoDB;
+use Miraheze\MirahezeMagic\Maintenance\PopulateWikibaseSitesTable;
 
 $wgManageWikiExtensions = [
 	// API
@@ -261,7 +264,7 @@ $wgManageWikiExtensions = [
 		],
 		'install' => [
 			'mwscript' => [
-				"$IP/extensions/MirahezeMagic/maintenance/createCargoDB.php" => [],
+				CreateCargoDB::class => [],
 			],
 			'sql' => [
 				'cargo_tables' => "$IP/extensions/Cargo/sql/Cargo.sql",
@@ -404,14 +407,6 @@ $wgManageWikiExtensions = [
 		'conflicts' => false,
 		'requires' => [],
 		'section' => 'parserhooks',
-	],
-	'customsearchprofiles' => [
-		'name' => 'CustomSearchProfiles',
-		'linkPage' => 'https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:CustomSearchProfiles',
-		'help' => 'Note: This extension is currently not configurable in ManageWiki. Please create a task on Phorge or a pull request to configure it.',
-		'conflicts' => false,
-		'requires' => [],
-		'section' => 'other',
 	],
 	'customsubtitle' => [
 		'name' => 'CustomSubtitle',
@@ -867,6 +862,13 @@ $wgManageWikiExtensions = [
 		'requires' => [],
 		'section' => 'parserhooks',
 	],
+	'randomimagebycategory' => [
+		'name' => 'RandomImageByCategory',
+		'linkPage' => 'https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:RandomImageByCategory',
+		'conflicts' => false,
+		'requires' => [],
+		'section' => 'parserhooks',
+	],
 	'randomselection' => [
 		'name' => 'RandomSelection',
 		'linkPage' => 'https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:RandomSelection',
@@ -1070,13 +1072,6 @@ $wgManageWikiExtensions = [
 	'titleicon' => [
 		'name' => 'Title Icon',
 		'linkPage' => 'https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:Title_Icon',
-		'conflicts' => false,
-		'requires' => [],
-		'section' => 'parserhooks',
-	],
-	'twittertag' => [
-		'name' => 'Twitter Tag',
-		'linkPage' => 'https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:TwitterTag',
 		'conflicts' => false,
 		'requires' => [],
 		'section' => 'parserhooks',
@@ -1292,6 +1287,65 @@ $wgManageWikiExtensions = [
 		],
 		'section' => 'specialpages',
 	],
+	'campaignevents' => [
+		'name' => 'CampaignEvents',
+		'linkPage' => 'https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:CampaignEvents',
+		'conflicts' => false,
+		'help' => 'Stewards: Do not enable this without T&S authority',
+		'requires' => [
+			'permissions' => [
+				'managewiki-restricted',
+			],
+		],
+		'install' => [
+			'sql' => [
+				'campaign_events' => "$IP/extensions/CampaignEvents/db_patches/mysql/tables-generated.sql",
+			],
+			'namespaces' => [
+				'Event' => [
+					'id' => 1728,
+					'searchable' => 0,
+					'subpages' => 1,
+					'protection' => '',
+					'content' => 0,
+					'aliases' => [],
+					'contentmodel' => 'wikitext',
+					'additional' => [],
+				],
+				'Event_talk' => [
+					'id' => 1729,
+					'searchable' => 0,
+					'subpages' => 1,
+					'protection' => '',
+					'content' => 0,
+					'aliases' => [],
+					'contentmodel' => 'wikitext',
+					'additional' => [],
+				],
+			],
+			'permissions' => [
+				'sysop' => [
+					'permissions' => [
+						'campaignevents-delete-registration',
+					],
+					'addgroups' => [
+						'event-organizer',
+					],
+					'removegroups' => [
+						'event-organizer',
+					],
+				],
+				'event-organizer' => [
+					'permissions' => [
+						'campaignevents-enable-registration',
+						'campaignevents-organize-events',
+						'campaignevents-email-participants',
+					],
+				],
+			],
+		],
+		'section' => 'specialpages',
+	],
 	'citethispage' => [
 		'name' => 'CiteThisPage',
 		'linkPage' => 'https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:CiteThisPage',
@@ -1374,14 +1428,6 @@ $wgManageWikiExtensions = [
 		'requires' => [],
 		'section' => 'specialpages',
 	],
-	'featuredfeeds' => [
-		'name' => 'FeaturedFeeds',
-		'linkPage' => 'https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:FeaturedFeeds',
-		'help' => '<b>Configuration of </b><code>$wgFeaturedFeeds</code><b> is not possible in ManageWiki.</b><br/> File a task on <a href="https://meta.miraheze.org/wiki/Special:MyLanguage/Phorge">Phorge</a> or a pull request on our mw-config repository with the desired configuration',
-		'conflicts' => false,
-		'requires' => [],
-		'section' => 'other'
-	],
 	'flaggedrevs' => [
 		'name' => 'FlaggedRevs',
 		'linkPage' => 'https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:FlaggedRevs',
@@ -1389,7 +1435,7 @@ $wgManageWikiExtensions = [
 		'requires' => [],
 		'install' => [
 			'sql' => [
-				'flaggedpages' => "$IP/extensions/FlaggedRevs/backend/schema/mysql/tables-generated.sql",
+				'flaggedpages' => "$IP/extensions/FlaggedRevs/includes/backend/schema/mysql/tables-generated.sql",
 			],
 			'permissions' => [
 				'editor' => [
@@ -1687,7 +1733,7 @@ $wgManageWikiExtensions = [
 	'pageschemas' => [
 		'name' => 'Page Schemas',
 		'linkPage' => 'https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:Page_Schemas',
-		'conflicts' => 'semanticmediawiki',
+		'conflicts' => false,
 		'requires' => [],
 		'install' => [
 			'permissions' => [
@@ -1757,7 +1803,7 @@ $wgManageWikiExtensions = [
 	'replacetext' => [
 		'name' => 'Replace Text',
 		'linkPage' => 'https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:Replace_Text',
-		'help' => 'Stewards and Wiki Mechanics: This extension should NOT be enabled on wikis created before 12 May 2024 without consulting the <a href="https://meta.miraheze.org/wiki/Special:MyLanguage/Tech:Volunteers" target="_blank">Technology Team</a> first',
+		'help' => 'Stewards and Wiki Mechanics: This extension should NOT be enabled on wikis created before 12 May 2024 without consulting the [[m:Special:MyLanguage/Tech:Volunteers|Technology Team]] first.',
 		'conflicts' => false,
 		'requires' => [
 			'permissions' => [
@@ -1852,6 +1898,7 @@ $wgManageWikiExtensions = [
 				'*' => [
 					'permissions' => [
 						'translate',
+						'unfuzzy'
 					],
 				],
 				'sysop' => [
@@ -2166,7 +2213,6 @@ $wgManageWikiExtensions = [
 		],
 		'install' => [
 			'mwscript' => [
-				"$IP/extensions/MirahezeMagic/maintenance/resetWikiCaches.php" => [],
 				"$IP/extensions/CirrusSearch/maintenance/UpdateSearchIndexConfig.php" => [],
 				"$IP/extensions/CirrusSearch/maintenance/ForceSearchIndex.php" => [
 					'skipLinks' => true,
@@ -2203,6 +2249,14 @@ $wgManageWikiExtensions = [
 	'commonsmetadata' => [
 		'name' => 'CommonsMetadata',
 		'linkPage' => 'https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:CommonsMetadata',
+		'conflicts' => false,
+		'requires' => [],
+		'section' => 'other',
+	],
+	'customsearchprofiles' => [
+		'name' => 'CustomSearchProfiles',
+		'linkPage' => 'https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:CustomSearchProfiles',
+		'help' => 'Note: This extension is currently not configurable in ManageWiki. Please create a task on Phorge or a pull request to configure it.',
 		'conflicts' => false,
 		'requires' => [],
 		'section' => 'other',
@@ -2268,6 +2322,14 @@ $wgManageWikiExtensions = [
 		'requires' => [],
 		'section' => 'other',
 	],
+	'editsimilar' => [
+		'name' => 'EditSimilar',
+		'linkPage' => 'https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:EditSimilar',
+		'conflicts' => false,
+		'requires' => [],
+		'install' => [],
+		'section' => 'other',
+	],
 	'editsubpages' => [
 		'name' => 'EditSubpages',
 		'linkPage' => 'https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:EditSubpages',
@@ -2291,6 +2353,14 @@ $wgManageWikiExtensions = [
 			],
 		],
 		'section' => 'other',
+	],
+	'featuredfeeds' => [
+		'name' => 'FeaturedFeeds',
+		'linkPage' => 'https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:FeaturedFeeds',
+		'help' => '<b>Configuration of</b> <code>$wgFeaturedFeeds</code> <b>is not possible in ManageWiki.</b><br />File a task on [[m:Special:MyLanguage/Phorge|Phorge]] or a pull request on our mw-config repository with the desired configuration.',
+		'conflicts' => false,
+		'requires' => [],
+		'section' => 'other'
 	],
 	'flexdiagrams' => [
 		'name' => 'Flex Diagrams',
@@ -3099,7 +3169,7 @@ $wgManageWikiExtensions = [
 	'semanticmediawiki' => [
 		'name' => 'SemanticMediaWiki',
 		'linkPage' => 'https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:SemanticMediaWiki',
-		'help' => '<br/> Permanently "experimental" and may be removed with little to no prior notice. WARNING: Disabling this extension after it\'s already been enabled will clear all SemanticMediaWiki database tables as well.',
+		'help' => '<br />Permanently "experimental" and may be removed with little to no prior notice. WARNING: Disabling this extension after it\'s already been enabled will clear all SemanticMediaWiki database tables as well.',
 		'conflicts' => false,
 		'requires' => [
 			'permissions' => [
@@ -3437,7 +3507,7 @@ $wgManageWikiExtensions = [
 				'wb_property_info' => "$IP/extensions/Wikibase/repo/sql/mysql/wb_property_info.sql"
 			],
 			'mwscript' => [
-				"$IP/extensions/MirahezeMagic/maintenance/populateWikibaseSitesTable.php" => [],
+				PopulateWikibaseSitesTable::class => [],
 			],
 		],
 		'section' => 'other',
@@ -3480,7 +3550,7 @@ $wgManageWikiExtensions = [
 					'protection' => '',
 					'content' => 0,
 					'aliases' => [],
-					'contentmodel' => 'wikitext',
+					'contentmodel' => 'wikibase-item',
 					'additional' => []
 				],
 				'Item_talk' => [
@@ -3500,7 +3570,7 @@ $wgManageWikiExtensions = [
 					'protection' => '',
 					'content' => 0,
 					'aliases' => [],
-					'contentmodel' => 'wikitext',
+					'contentmodel' => 'wikibase-property',
 					'additional' => []
 				],
 				'Property_talk' => [
@@ -3701,20 +3771,6 @@ $wgManageWikiExtensions = [
 		'requires' => [],
 		'section' => 'skins',
 	],
-	'evelution' => [
-		'name' => 'Evelution',
-		'linkPage' => 'https://www.mediawiki.org/wiki/Special:MyLanguage/Skin:Evelution',
-		'conflicts' => false,
-		'requires' => [],
-		'section' => 'skins',
-	],
-	'eveskin' => [
-		'name' => "Eveskin",
-		'linkPage' => 'https://www.mediawiki.org/wiki/Special:MyLanguage/Skin:Eveskin',
-		'conflicts' => false,
-		'requires' => [],
-		'section' => 'skins',
-	],
 	'femiwiki' => [
 		'name' => 'Femiwiki',
 		'linkPage' => 'https://www.mediawiki.org/wiki/Special:MyLanguage/Skin:Femiwiki',
@@ -3739,6 +3795,13 @@ $wgManageWikiExtensions = [
 	'hassomecolours' => [
 		'name' => 'HasSomeColours',
 		'linkPage' => 'https://www.mediawiki.org/wiki/Special:MyLanguage/Skin:HasSomeColours',
+		'conflicts' => false,
+		'requires' => [],
+		'section' => 'skins',
+	],
+	'lakeus' => [
+		'name' => 'Lakeus',
+		'linkPage' => 'https://www.mediawiki.org/wiki/Special:MyLanguage/Skin:Lakeus',
 		'conflicts' => false,
 		'requires' => [],
 		'section' => 'skins',
