@@ -26,7 +26,7 @@ class MirahezeFunctions {
 
 	public static array $disabledExtensions = [];
 
-	private const ALLOWED_DOMAINS = [
+	private const array ALLOWED_DOMAINS = [
 		'default' => [
 			'miraheze.org',
 			'wikitide.org',
@@ -37,44 +37,44 @@ class MirahezeFunctions {
 		],
 	];
 
-	private const BETA_HOSTNAME = 'test151';
+	private const string BETA_HOSTNAME = 'test151';
 
-	private const CACHE_DIRECTORY = '/srv/mediawiki/cache';
+	private const string CACHE_DIRECTORY = '/srv/mediawiki/cache';
 
-	private const CENTRAL_DATABASE = [
+	private const array CENTRAL_DATABASE = [
 		'default' => 'metawiki',
 		'beta' => 'metawikibeta',
 	];
 
-	private const DEFAULT_SERVER = [
+	private const array DEFAULT_SERVER = [
 		'default' => 'miraheze.org',
 		'beta' => 'mirabeta.org',
 	];
 
-	private const SHARED_DOMAIN = [
+	private const array SHARED_DOMAIN = [
 		'default' => 'auth.miraheze.org',
 		'beta' => 'auth.mirabeta.org',
 	];
 
-	private const GLOBAL_DATABASE = [
+	private const array GLOBAL_DATABASE = [
 		'default' => 'mhglobal',
 		'beta' => 'testglobal',
 	];
 
-	private const INCIDENTS_DATABASE = [
+	private const array INCIDENTS_DATABASE = [
 		'default' => 'incidents',
 		'beta' => 'testglobal',
 	];
 
-	private const MEDIAWIKI_DIRECTORY = '/srv/mediawiki/';
+	private const string MEDIAWIKI_DIRECTORY = '/srv/mediawiki/';
 
-	public const MEDIAWIKI_VERSIONS = [
+	public const array MEDIAWIKI_VERSIONS = [
 		'alpha' => '1.45',
 		'beta' => '1.45',
 		'stable' => '1.45',
 	];
 
-	public const SUFFIXES = [
+	public const array SUFFIXES = [
 		'wiki' => self::ALLOWED_DOMAINS['default'],
 		'wikibeta' => self::ALLOWED_DOMAINS['beta'],
 	];
@@ -289,7 +289,7 @@ class MirahezeFunctions {
 			$requestUri = $_SERVER['REQUEST_URI'];
 			$pathBits = explode( '/', $requestUri, 3 );
 			if ( count( $pathBits ) < 3 ) {
-				trigger_error( "Invalid request URI (requestUri=" . $requestUri . "), can't determine language.\n", E_USER_ERROR );
+				print_r( "Invalid request URI (requestUri=$requestUri), can't determine language.\n" );
 				exit( 1 );
 			}
 			[ , $dbname, ] = $pathBits;

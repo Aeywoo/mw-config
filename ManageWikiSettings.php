@@ -2927,6 +2927,15 @@ $wgManageWikiSettings = [
 		'help' => 'Shows comments in the RecentChanges special page.',
 		'requires' => [],
 	],
+	'wgCommentStreamsSuppressLogsFromRCs' => [
+		'name' => 'CommentStreams Suppress Logs From RecentChanges',
+		'from' => 'commentstreams',
+		'type' => 'check',
+		'overridedefault' => true,
+		'section' => 'recentchanges',
+		'help' => 'Suppresses CommentStreams-related logs from being added to Special:RecentChanges',
+		'requires' => [],
+	],
 	'wgWikiForumLogsInRC' => [
 		'name' => 'Display WikiForum logs in RecentChanges',
 		'from' => 'wikiforum',
@@ -3680,7 +3689,7 @@ $wgManageWikiSettings = [
 			'base',
 		],
 		'options' => [
-			'Beta  feature' => 'beta',
+			'Beta feature' => 'beta',
 			'Default' => 'base',
 		],
 		'overridedefault' => [
@@ -3724,6 +3733,53 @@ $wgManageWikiSettings = [
 				'value' => true,
 			]
 		],
+	],
+	'wgMinervaNightMode' => [
+		'name' => 'Minerva Enable Dark Mode',
+		'from' => 'minervaneue',
+		'type' => 'list-multi-bool',
+		'allopts' => [
+			'amc',
+			'base',
+			'loggedin',
+		],
+		'options' => [
+			'AMC' => 'amc',
+			'Default' => 'base',
+			'Logged in' => 'loggedin',
+		],
+		'overridedefault' => [
+			'amc' => true,
+			'base' => true,
+			'loggedin' => true,
+		],
+		'section' => 'styling',
+		'help' => 'Enable Minerva\'s dark mode for users with these features enabled.',
+		'requires' => [],
+	],
+	'wgVectorNightMode' => [
+		'name' => 'Vector 2022 Enable Dark Mode',
+		'from' => 'vector',
+		'global' => true,
+		'type' => 'list-multi-bool',
+		'allopts' => [
+			'logged_out',
+			'logged_in',
+			'beta',
+		],
+		'options' => [
+			'Logged out' => 'logged_out',
+			'Logged in' => 'logged_in',
+			'Beta feature' => 'beta',
+		],
+		'overridedefault' => [
+			'logged_out' => false,
+			'logged_in' => true,
+			'beta' => false,
+		],
+		'section' => 'styling',
+		'help' => 'Enable Vector 2022\'s dark mode for these users.',
+		'requires' => [],
 	],
 	'wgWordmark' => [
 		'name' => 'Wordmark',

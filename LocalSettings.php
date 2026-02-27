@@ -13,7 +13,10 @@ if ( PHP_SAPI !== 'cli' ) {
 
 setlocale( LC_ALL, 'en_US.UTF-8' );
 
-$mwtask = str_starts_with( wfHostname(), 'mwtask' );
+// test also because it acts as its own jobrunner.
+$mwtask = str_starts_with( wfHostname(), 'mwtask' ) ||
+	str_starts_with( wfHostname(), 'test' );
+
 // Higher on mwtask
 if ( $mwtask ) {
 	// 3000MiB
@@ -30,9 +33,9 @@ if ( PHP_SAPI === 'cli' ) {
 	$host = $_SERVER['HTTP_HOST'] ?? '';
 	if ( str_starts_with( $host, 'videoscaler.' ) ) {
 		$wgRequestTimeLimit = 86400;
-	} elseif ( str_starts_with( $host, 'jobrunner-high.' ) ) {
+	} elseif ( str_starts_with( $host, 'jobrunner-high.' ) || str_starts_with( wfHostname(), 'test' ) ) {
 		$wgRequestTimeLimit = 259200;
-	} elseif ( str_starts_with( $host, 'jobrunner.' ) ) {
+	} else {
 		$wgRequestTimeLimit = 1200;
 	}
 } elseif ( ( $_SERVER['REQUEST_METHOD'] ?? '' ) === 'POST' ) {
@@ -624,12 +627,14 @@ $wgConf->settings += [
 			'centralDB' => 'metawiki',
 			'groups' => [
 				'steward',
+				'trustandsafety',
 			],
 		],
 		'beta' => [
 			'centralDB' => 'metawikibeta',
 			'groups' => [
 				'steward',
+				'trustandsafety',
 			],
 		],
 	],
@@ -720,6 +725,9 @@ $wgConf->settings += [
 	],
 	'wgCommentStreamsModeratorFastDelete' => [
 		'default' => false,
+	],
+	'wgCommentStreamsSuppressLogsFromRCs' => [
+		'default' => true,
 	],
 
 	// CommonsMetadata
@@ -2256,6 +2264,13 @@ $wgConf->settings += [
 					'alt' => 'Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)',
 				],
 			],
+			'freeart' => [
+				'freeart' => [
+					'src' => 'https://static.wikitide.net/thechurchofthestatuewiki/6/68/Free_art_licence_footmark.svg',
+					'url' => 'https://artlibre.org/licence/lal/en/',
+					'alt' => 'Free Art Licence (FAL)',
+				],
+			],
 		],
 		'tnowiki' => [
 			'poweredby' => [
@@ -2768,7 +2783,8 @@ $wgConf->settings += [
 
 	// GlobalUsage
 	'wgGlobalUsageSharedRepoWiki' => [
-		'default' => false,
+		'default' => 'commonswiki',
+		'beta' => 'commonswikibeta',
 		'gpcommonswiki' => 'gpcommonswiki',
 		'gratisdatawiki' => 'gpcommonswiki',
 		'gratispaideiawiki' => 'gpcommonswiki',
@@ -2870,7 +2886,7 @@ $wgConf->settings += [
 		'default' => true,
 	],
 	'wgImageMagickConvertCommand' => [
-		'default' => '/usr/local/bin/mediawiki-firejail-convert',
+		'default' => '/usr/local/bin/mediawiki-firejail-magick',
 	],
 	'wgJpegPixelFormat' => [
 		'default' => 'yuv420',
@@ -3619,6 +3635,7 @@ $wgConf->settings += [
 			'mobilefrontend',
 			// T14325: added here after being removed from global skins
 			'modern',
+			'multimediaviewer',
 			'portableinfobox',
 			'purge',
 			'syntaxhighlight_geshi',
@@ -4196,6 +4213,7 @@ $wgConf->settings += [
 				'oathauth-disable-for-user',
 				'oathauth-verify-user',
 				'oathauth-view-log',
+				'oathauth-recover-for-user',
 				'renameuser',
 				'renameuser-global',
 				'reportincident',
@@ -4501,8 +4519,6 @@ $wgConf->settings += [
 			'staffwiki' => [
 				/** Labster (Board) */
 				2551,
-				/** Void (Technology team) */
-				5258,
 				/** Harej (Board) */
 				13892,
 				/** RhinosF1 (Miraheze) (Technology team) */
@@ -4531,6 +4547,8 @@ $wgConf->settings += [
 				796544,
 				/** Reception123 (Miraheze) (Technology team and Board) */
 				796684,
+				/** Void (Miraheze) (Technology team) */
+				798213,
 			],
 		],
 	],
@@ -4620,12 +4638,10 @@ $wgConf->settings += [
 	],
 	'wgCrossSiteAJAXdomains' => [
 		'default' => [
-			'*.miraheze.org',
-			'*.wikitide.org',
+			'login.miraheze.org',
 		],
 		'beta' => [
-			'*.mirabeta.org',
-			'*.nexttide.org',
+			'login.mirabeta.org',
 		],
 		'private' => [],
 		'wikicreatorswiki' => [
@@ -4654,6 +4670,10 @@ $wgConf->settings += [
 	],
 	'wgCleanSignatures' => [
 		'default' => true,
+	],
+	'wgResponsiveImages' => [
+		'default' => true,
+		'lookoutsidewiki' => false,
 	],
 
 	// MobileFrontend
@@ -4808,6 +4828,13 @@ $wgConf->settings += [
 	],
 	'wgMFUseWikibase' => [
 		'default' => false,
+	],
+	'wgMinervaNightMode' => [
+		'default' => [
+			'amc' => true,
+			'base' => true,
+			'loggedin' => true,
+		],
 	],
 
 	// Moderation extension settings
@@ -5379,6 +5406,9 @@ $wgConf->settings += [
 			'rcenhancedfilters-disable' => 1,
 			'wlenhancedfilters-disable' => 1,
 		],
+		'+lazerpigeonwiki' => [
+			'vector-theme' => 'os',
+		],
 		'+mariowiki' => [
 			'rcenhancedfilters-disable' => 1,
 			'wlenhancedfilters-disable' => 1,
@@ -5408,6 +5438,9 @@ $wgConf->settings += [
 			'visualeditor-newwikitext' => 1,
 			'usebetatoolbar' => 0,
 			'usebetatoolbar-cgd' => 0,
+		],
+		'+sp2pediawiki' => [
+			'vector-theme' => 'night',
 		],
 		'+ssbuniversewiki' => [
 			'rcenhancedfilters-disable' => 1,
@@ -6751,6 +6784,13 @@ $wgConf->settings += [
 	'wgVectorDefaultSidebarVisibleForAnonymousUser' => [
 		'default' => true,
 	],
+	'wgVectorNightMode' => [
+		'default' => [
+			'logged_out' => false,
+			'logged_in' => true,
+			'beta' => false,
+		],
+	],
 	'wgVectorWvuiSearchOptions' => [
 		'default' => [
 			'showThumbnail' => true,
@@ -7260,7 +7300,7 @@ $wgConf->settings += [
 	],
 
 	// WikimediaIncubator
-	'wmincProjects' => [
+	'wgWmincProjects' => [
 		'default' => [
 			'p' => [
 				'name' => 'Wikipedia',
@@ -7312,22 +7352,23 @@ $wgConf->settings += [
 			],
 		],
 	],
-	'wmincProjectSite' => [
+	'wgWmincProjectSite' => [
 		'default' => [
 			'name' => 'Incubator Plus 2.0',
 			'short' => 'incplus',
 		],
 	],
-	'wmincExistingWikis' => [
-		'default' => null,
-	],
-	'wmincClosedWikis' => [
-		'default' => false,
-	],
-	'wmincMultilingualProjects' => [
+	'wgWmincExistingWikis' => [
+		// empty array, see T14782
 		'default' => [],
 	],
-	'wmincTestWikiNamespaces' => [
+	'wgWmincClosedWikis' => [
+		'default' => false,
+	],
+	'wgWmincMultilingualProjects' => [
+		'default' => [],
+	],
+	'wgWmincTestWikiNamespaces' => [
 		'default' => [
 			NS_MAIN,
 			NS_TALK,
@@ -7640,13 +7681,13 @@ $wi::$disabledExtensions = [
 	'wikiforum' => '[[phorge:T13064|T13064]]',
 
 	'lingo' => 'Currently broken',
+	'linktitles' => 'Performance and compatibility issues ([[phorge:T14992|T14992]])',
 
-	'highlightlinksincategory' => 'Incompatible with MediaWiki 1.45',
 	'video' => 'Incompatible with MediaWiki 1.45',
 
 	// Are these still incompatible?
 	'chameleon' => 'Incompatible with MediaWiki 1.45',
-	'snapwikiskin' => 'Incompatible with MediaWiki 1.45',
+	'snapwikiskin' => 'Incompatible with MediaWiki 1.45'
 ];
 
 $globals = MirahezeFunctions::getConfigGlobals();
